@@ -4,7 +4,7 @@ model = dict(
     backbone=dict(
         type="MixFormer",                  # Backbone architecture used in the model.
         vit_type="cvt13",                  # Specific variant for MixFormer.
-        pretrain_path="pretrain_model/CvT-13-384x384-IN-22k.pth",  # путь к весам предобученной модели для инициализации бэкбона
+        pretrain_path="checkpoints/CvT-13-384x384-IN-22k.pth",  # путь к весам предобученной модели для инициализации бэкбона
         pretrain=True,                       # Use pretrained weights for backbone initialization.
         output_index=[0, 1, 2],              # Which backbone feature maps to use.
     ),
