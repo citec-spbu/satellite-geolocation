@@ -1,13 +1,10 @@
-# Example configuration file for the FPI inference wrapper.
-#
-# This config uses the same dictionary-based format as the main project.
-# You can load it with mmcv.Config and pass it to FPIInference.
-
+# пример кофиига для использования модели
+# то что нужно менять - написанно на русском
 model = dict(
     backbone=dict(
         type="MixFormer",                  # Backbone architecture used in the model.
         vit_type="cvt13",                  # Specific variant for MixFormer.
-        pretrain_path="pretrain_model/CvT-13-384x384-IN-22k.pth",  # Path to pretrained backbone weights.
+        pretrain_path="pretrain_model/CvT-13-384x384-IN-22k.pth",  # путь к весам предобученной модели для инициализации бэкбона
         pretrain=True,                       # Use pretrained weights for backbone initialization.
         output_index=[0, 1, 2],              # Which backbone feature maps to use.
     ),
@@ -42,9 +39,9 @@ data_config = dict(
     batchsize=8,
     num_worker=8,
     val_batchsize=8,
-    train_dir="/path/to/train",            # Not used in inference, included for compatibility.
-    val_dir="/path/to/val",
-    test_dir="/path/to/test",
+    train_dir="/path/to/train",            # для обучения,не нужно для инференса.
+    val_dir="/path/to/val",                # для валидации,не нужно для инференса.
+    test_dir="/path/to/test",              # Путь к папке с тестовыми данными. Структура папки должна быть такой же, как в обучении, с подкаталогами 'query_satellite' и 'query_drone'.
     test_mode="merge_test_700-1800_cr0.95_stride100",
     UAVhw=[192, 192],                        # Resize UAV input images to this size.
     Satellitehw=[576, 576],                  # Resize satellite input images to this size.
@@ -78,7 +75,7 @@ train_config = dict(autocast=True, num_epochs=12)
 test_config = dict(
     num_worker=8,
     filterR=51,                              # Optional post-filter radius for response maps.
-    checkpoint="output/net_best.pth",      # Default checkpoint path for testing.
+    checkpoint="output/net_best.pth",      # путь к весам модели для инференса.
 )
 
 checkpoint_config = dict(
