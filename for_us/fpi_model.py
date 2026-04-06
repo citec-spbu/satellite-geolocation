@@ -18,7 +18,6 @@ import numpy as np
 import torch
 from PIL import Image
 from torchvision import transforms
-from mmcv import Config
 
 # Ensure repository root is importable when this module is used from another project.
 ROOT_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
