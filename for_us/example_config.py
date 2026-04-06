@@ -2,17 +2,17 @@
 # то что нужно менять - написанно на русском
 model = dict(
     backbone=dict(
-        type="MixFormer",                  # Backbone architecture used in the model.
+        type="CvT",                  # Backbone architecture used in the model.
         vit_type="cvt13",                  # Specific variant for MixFormer.
         pretrain_path="checkpoints/CvT-13-384x384-IN-22k.pth",  # путь к весам предобученной модели для инициализации бэкбона
         pretrain=True,                       # Use pretrained weights for backbone initialization.
         output_index=[0, 1, 2],              # Which backbone feature maps to use.
     ),
     neck=dict(
-        type="FPN_I3",                     # Neck type applied after backbone.
-        output_dims=128,                     # Output channels for the neck.
-        UAV_output_index=[0],                # Which neck output(s) to use for UAV branch.
-        Satellite_ouput_index=0,              # Which neck output(s) to use for Satellite branch.
+        type="CCN",
+        output_dims=128,
+        UAV_output_index=[0],
+        Satellite_ouput_index=0,
     ),
     head=dict(
         type="ChannelEmbedding",           # Head type that computes the response map.

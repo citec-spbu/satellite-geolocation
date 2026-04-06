@@ -4,7 +4,7 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 import timm.models.vision_transformer
-from timm.models.layers import DropPath, Mlp
+from timm.layers import DropPath, Mlp
 import numpy as np
 
 from models.pos_utils import get_2d_sincos_pos_embed

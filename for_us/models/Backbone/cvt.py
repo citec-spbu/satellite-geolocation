@@ -12,7 +12,7 @@ import torch.nn.functional as F
 from einops import rearrange
 from einops.layers.torch import Rearrange
 
-from timm.models.layers import DropPath, trunc_normal_
+from timm.layers import DropPath, trunc_normal_
 
 
 # From PyTorch internals
@@ -550,7 +550,7 @@ class ConvolutionalVisionTransformer(nn.Module):
             for k, v in pretrained_dict.items():
                 need_init = (
                         k.split('.')[0] in pretrained_layers
-                        or pretrained_layers[0] is '*'
+                        or pretrained_layers[0] == '*'
                 )
                 if need_init:
                     if verbose:
@@ -621,7 +621,7 @@ class ConvolutionalVisionTransformer(nn.Module):
         return x
 
 spec_lib = {
-    "cvt13": {
+    "13": {
         "NUM_STAGES": 3,
         "PATCH_SIZE": [7, 3, 3],
         "PATCH_STRIDE": [4, 2, 2],
@@ -645,7 +645,7 @@ spec_lib = {
         "FREEZE_BN": True,
     },
 
-    "cvt21": {
+    "21": {
         "NUM_STAGES": 3,
         "PATCH_SIZE": [7, 3, 3],
         "PATCH_STRIDE": [4, 2, 2],
@@ -672,6 +672,8 @@ spec_lib = {
 
 def get_cvt_models(model_size="13",
                    **kwargs):
+    if "vit_type" in kwargs:
+        model_size = kwargs["vit_type"].replace("cvt", "")
     msvit_spec = spec_lib[model_size]
     msvit = ConvolutionalVisionTransformer(
         in_chans=3,

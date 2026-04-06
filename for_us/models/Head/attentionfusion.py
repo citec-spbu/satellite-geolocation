@@ -5,8 +5,8 @@ import torch.nn.functional as F
 import torch
 import numpy as np
 from .utils import ChannelPool
-from timm.models.layers import DropPath, Mlp, trunc_normal_
-from timm.models.helpers import named_apply
+from timm.layers import DropPath, Mlp, trunc_normal_
+from timm.models import named_apply
 from functools import partial
 from models.pos_utils import get_2d_sincos_pos_embed
 

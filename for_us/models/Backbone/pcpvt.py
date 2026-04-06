@@ -3,11 +3,10 @@ import torch.nn as nn
 import torch.nn.functional as F
 from functools import partial
 
-from timm.models.layers import DropPath, to_2tuple, trunc_normal_
-from mmdet.utils import get_root_logger
-from mmcv.runner import load_checkpoint
+from timm.layers import DropPath, to_2tuple, trunc_normal_
+from mmengine.logging import MMLogger as get_root_logger
+from mmengine.runner import load_checkpoint
 from timm.models.vision_transformer import Block as TimmBlock
-from mmcv.runner import auto_fp16
 
 import copy
 from collections import OrderedDict
@@ -51,7 +50,6 @@ class GroupAttention(nn.Module):
         self.proj_drop = nn.Dropout(proj_drop)
         self.ws = ws
 
-    @auto_fp16()
     def forward(self, x, H, W):
         B, N, C = x.shape
         x = x.view(B, H, W, C)
@@ -99,7 +97,6 @@ class Attention(nn.Module):
             self.sr = nn.Conv2d(dim, dim, kernel_size=sr_ratio, stride=sr_ratio)
             self.norm = nn.LayerNorm(dim)
 
-    @auto_fp16()
     def forward(self, x, H, W):
         B, N, C = x.shape
         q = self.q(x).reshape(B, N, self.num_heads, C // self.num_heads).permute(0, 2, 1, 3)
@@ -292,7 +289,6 @@ class PyramidVisionTransformer(nn.Module):
         self.num_classes = num_classes
         self.head = nn.Linear(self.embed_dim, num_classes) if num_classes > 0 else nn.Identity()
 
-    @auto_fp16()
     def forward_features(self, x):
         B = x.shape[0]
         for i in range(len(self.depths)):
@@ -325,7 +321,6 @@ class PosCNN(nn.Module):
         self.proj = nn.Sequential(nn.Conv2d(in_chans, embed_dim, 3, s, 1, bias=True, groups=embed_dim),)
         self.s = s
 
-    @auto_fp16()
     def forward(self, x, H, W):
         B, N, C = x.shape
         feat_token = x
@@ -379,7 +374,6 @@ class CPVTV2(PyramidVisionTransformer):
     def no_weight_decay(self):
         return set(['cls_token'] + ['pos_block.' + n for n, p in self.pos_block.named_parameters()])
 
-    @auto_fp16()
     def forward_features(self, x):
         outputs = list()
 
@@ -444,7 +438,6 @@ class ALTGVT(PCPVT):
             self.blocks.append(_block)
         self.apply(self._init_weights)
 
-    @auto_fp16()
     def forward_features(self, x):
         outputs = list()
 

@@ -14,7 +14,7 @@ import numpy as np
 import torch.nn.functional as F
 from torch import nn, Tensor
 import torch
-from timm.models.layers import trunc_normal_
+from timm.layers import trunc_normal_
 from models.pos_utils import get_2d_sincos_pos_embed
 from .utils import ChannelPool, xcorr_fast, xcorr_depthwise, xcorr_slow
 
