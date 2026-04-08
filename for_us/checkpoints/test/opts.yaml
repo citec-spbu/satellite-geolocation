@@ -1,0 +1,100 @@
+backbone_output_channel: &id001
+- 64
+- 192
+- 384
+checkpoint_config:
+  epoch_start_save: 6
+  interval: 1
+  only_save_best: true
+config: distill/new_example_config.json
+data_config:
+  Satellitehw:
+  - 576
+  - 576
+  UAVhw:
+  - 192
+  - 192
+  batchsize: 8
+  num_worker: 0
+  test_dir: D:/CrossGeoLoc_clear_version/map2019/train
+  test_mode: merge_test_700-1800_cr0.95_stride100
+  train_dir: D:/CrossGeoLoc_clear_version/map2019/train
+  val_batchsize: 8
+  val_dir: D:/CrossGeoLoc_clear_version/map2019/val
+debug: true
+device: !!python/object/apply:torch.device
+- cpu
+gpu_ids: '0'
+load_from: null
+log_interval: 50
+lr_config:
+  lr: 0.00015
+  type: cosine
+  warmup_iters: 500
+  warmup_ratio: 0.01
+model:
+  backbone:
+    output_index:
+    - 0
+    - 1
+    - 2
+    pretrain: true
+    pretrain_path: checkpoints/CvT-13-384x384-IN-22k.pth
+    type: CvT
+    vit_type: cvt13
+  head:
+    input_ndim: 384
+    mid_process_channels:
+    - 64
+    - 16
+    - 1
+    muti_level_nums: 1
+  loss:
+    cls_loss:
+      center_R: 31
+      neg_weight: 130
+  neck:
+    Satellite_ouput_index: 0
+    UAV_output_index:
+    - 0
+    input_dims: *id001
+    output_dims: 384
+    type: CCN
+  postprocess:
+    output_size:
+    - 576
+    - 576
+    upsample_to_original: true
+name: test
+pipline_config:
+  train_pipeline:
+    Satellite:
+      RandomCrop:
+        cover_rate: 0.85
+        map_size:
+        - 512
+        - 1000
+      RandomResize:
+        img_size:
+        - 576
+        - 576
+      ToTensor: {}
+    UAV:
+      RandomErasing:
+        probability: 0.3
+      RandomResize:
+        img_size:
+        - 192
+        - 192
+      ToTensor: {}
+resume_from: null
+seed: 42
+test_config:
+  checkpoint: output/net_best.pth
+  filterR: 51
+  num_worker: 0
+train_config:
+  autocast: true
+  num_epochs: 12
+train_iters_per_epoch: 846
+use_gpu: false
