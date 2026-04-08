@@ -10,10 +10,11 @@ Usage example:
     print(result['pixel_coordinate'])
 """
 
+import pathlib
 import os
 import sys
 from typing import Tuple, Union, Dict
-
+from distill.configuration_file import config
 import numpy as np
 import torch
 from PIL import Image
@@ -24,7 +25,7 @@ ROOT_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
 if ROOT_DIR not in sys.path:
     sys.path.insert(0, ROOT_DIR)
 
-from models.taskflow import make_model
+from distill.taskflow import make_model
 
 
 def _to_pil(image: Union[np.ndarray, Image.Image]) -> Image.Image:
@@ -76,11 +77,11 @@ class FPIInference:
                  config_path: str,
                  checkpoint_path: str,
                  device: Union[str, torch.device] = None):
-        self.config_path = os.path.abspath(config_path)
-        self.checkpoint_path = os.path.abspath(checkpoint_path)
+        self.config_path = pathlib.Path(config_path).resolve()
+        self.checkpoint_path = pathlib.Path(checkpoint_path).resolve()
         self.device = torch.device(device if device is not None else 'cpu')
 
-        self.cfg = Config.fromfile(self.config_path)
+        self.cfg = config(self.config_path)
         self.model = build_model(self.cfg, device=self.device)
         load_checkpoint(self.model, self.checkpoint_path, map_location=self.device)
         self.model.eval()
