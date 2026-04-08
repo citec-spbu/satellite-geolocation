@@ -2,6 +2,7 @@ import json
 from pathlib import Path
 class config():
     def __init__(self,config_path: str):
+        config_path = Path(config_path)
         data=json.loads(config_path.read_text())
         self.model=data['model']
         self.data_config=data['data_config']

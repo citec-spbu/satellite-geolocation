@@ -7,8 +7,9 @@ import torch
 
 
 class FPI(nn.Module):
-    def __init__(self, opt):
+    def __init__(self, opt,device):
         super(FPI, self).__init__()
+        self.device=device
         self.opt = opt
         # backbone init
         self.backbone_name = opt.model["backbone"]["type"]
@@ -61,16 +62,16 @@ class FPI(nn.Module):
         return cls_out, reg_out
 
     def load_checkpoint(self, checkpoint_path=""):
-        ckpt = torch.load(checkpoint_path, map_location='cpu')
+        ckpt = torch.load(checkpoint_path, map_location=self.device)
         missing_keys, unexpected_keys = self.load_state_dict(ckpt, strict=False)
         print("Load pretrained backbone checkpoint from:", checkpoint_path)
         print("missing keys:", missing_keys)
         print("unexpected keys:", unexpected_keys)
 
 
-def make_model(opt):
+def make_model(opt,device):
     # init the FPI model
-    model = FPI(opt)
+    model = FPI(opt,device=device)
     # if 'load_from' is not empty, load the pretrain checkpoint.
     if isinstance(opt.load_from, str) and len(opt.load_from) > 0:
         model.load_checkpoint(opt.load_from)

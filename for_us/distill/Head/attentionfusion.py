@@ -8,7 +8,7 @@ from .utils import ChannelPool
 from timm.layers import DropPath, Mlp, trunc_normal_
 from timm.models import named_apply
 from functools import partial
-from models.pos_utils import get_2d_sincos_pos_embed
+from distill.pos_utils import get_2d_sincos_pos_embed
 
 
 class Attention(nn.Module):

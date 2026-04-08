@@ -50,17 +50,10 @@ def _make_transform(image_size: Tuple[int, int]):
 
 
 def build_model(opt: object, device: Union[str, torch.device] = None) -> torch.nn.Module:
-    model = make_model(opt)
+    model = make_model(opt, device)
     if device is not None:
         model = model.to(device)
     return model
-
-
-def build_model_from_config(config_path: str, device: Union[str, torch.device] = None):
-    config_path = os.path.abspath(config_path)
-    cfg = Config.fromfile(config_path)
-    model = build_model(cfg, device=device)
-    return model, cfg
 
 
 def load_checkpoint(model: torch.nn.Module, checkpoint_path: str, map_location: Union[str, torch.device] = 'cpu'):
@@ -80,10 +73,8 @@ class FPIInference:
         self.config_path = pathlib.Path(config_path).resolve()
         self.checkpoint_path = pathlib.Path(checkpoint_path).resolve()
         self.device = torch.device(device if device is not None else 'cpu')
-
         self.cfg = config(self.config_path)
         self.model = build_model(self.cfg, device=self.device)
-        load_checkpoint(self.model, self.checkpoint_path, map_location=self.device)
         self.model.eval()
 
         self.uav_size = tuple(self.cfg.data_config['UAVhw'])
@@ -177,11 +168,3 @@ class FPIInference:
                 result['loc_bias_normalized'] = (corrected_x / self.satellite_size[1], corrected_y / self.satellite_size[0])
 
         return result
-
-
-__all__ = [
-    'FPIInference',
-    'build_model',
-    'build_model_from_config',
-    'load_checkpoint',
-]

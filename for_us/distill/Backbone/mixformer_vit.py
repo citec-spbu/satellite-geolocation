@@ -7,7 +7,7 @@ import timm.models.vision_transformer
 from timm.layers import DropPath, Mlp
 import numpy as np
 
-from models.pos_utils import get_2d_sincos_pos_embed
+from distill.pos_utils import get_2d_sincos_pos_embed
 from .utils import to_2tuple
 
 
