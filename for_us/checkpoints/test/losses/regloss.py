@@ -15,13 +15,13 @@ class SmoothL1Loss(nn.Module):
     def forward_score(self, cls_input, loc_input, center_rate):
         cls_part = cls_input.reshape(cls_input.shape[0], -1)
         topk_indices = torch.topk(cls_part, 1, dim=1).indices
-        cls_topk_mask = torch.zeros_like(cls_part, device="cuda:0", dtype=bool)
+        cls_topk_mask = torch.zeros_like(cls_part, device=cls_input.device, dtype=bool)
         for i in range(topk_indices.shape[0]):
             cls_topk_mask[i][topk_indices[i]] = True
         # pos_mask = pos_mask.reshape(-1)
         # pos_mask = cls_topk_mask.reshape(-1) & pos_mask
         pos_mask = cls_topk_mask.reshape(-1)
-        bias_map = self.create_loc_bias(cls_input.size(), center_rate)
+        bias_map = self.create_loc_bias(cls_input.size(), center_rate, cls_input.device)
         bias_map = bias_map.reshape(-1, 2)
         bias_pos = bias_map[pos_mask].reshape(-1)
         res_pos = loc_input.permute(0, 2, 3, 1).contiguous().reshape(-1, 2)
@@ -37,7 +37,7 @@ class SmoothL1Loss(nn.Module):
         reg_mask = (target == 1).reshape(-1)
         cls_mask = cls_input.sigmoid().reshape(-1) > self.score_thr
         mask = reg_mask & cls_mask
-        bias_map = self.create_loc_bias(cls_input.size(), center_rate)
+        bias_map = self.create_loc_bias(cls_input.size(), center_rate, cls_input.device)
         bias_map = bias_map.reshape(-1, 2)
         pos_bias_map = bias_map[mask]
         res_pos_map = loc_input.permute(0, 2, 3, 1).contiguous().reshape(-1, 2)
@@ -47,7 +47,7 @@ class SmoothL1Loss(nn.Module):
         loc_loss = F.smooth_l1_loss(res_pos_map, pos_bias_map, reduction='mean')
         return loc_loss * self.weight_rate
 
-    def create_loc_bias(self, size, center_rate):
+    def create_loc_bias(self, size, center_rate, device):
         b, c, h, w = size
         x = np.arange(h)
         y = np.arange(w)
@@ -62,12 +62,13 @@ class SmoothL1Loss(nn.Module):
         # gt = center_rate.repeat(size[0], axis=1).repeat(size[1], axis=2)
         bias_map = center_rate - loc_map_normal
         bias_map *= [h-1, w-1]
-        return torch.from_numpy(bias_map).cuda().float()
+        return torch.from_numpy(bias_map).float().to(device)
 
 
 if __name__ == "__main__":
+    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     loss = SmoothL1Loss(center_R=5)
-    cls_input = torch.randn((4, 1, 24, 24)).cuda()
-    reg_input = torch.randn((4, 2, 24, 24)).cuda()
+    cls_input = torch.randn((4, 1, 24, 24), device=device)
+    reg_input = torch.randn((4, 2, 24, 24), device=device)
     center_rate = [[0.5, 0.2, 0.8, 0.2], [0.5, 0.5, 0.5, 0.2]]
     loc_loss = loss(cls_input, reg_input, center_rate)

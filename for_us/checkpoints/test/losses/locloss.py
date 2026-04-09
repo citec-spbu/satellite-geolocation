@@ -17,12 +17,12 @@ class LocSmoothL1Loss(nn.Module):
         cls_input = torch.sigmoid(cls_input)
         cls_part = cls_input.reshape(cls_input.shape[0], -1)
         topk_indices = torch.topk(cls_part, self.topk, dim=1).indices
-        cls_topk_mask = torch.zeros_like(cls_part, device="cuda:0", dtype=bool)
+        cls_topk_mask = torch.zeros_like(cls_part, device=cls_input.device, dtype=bool)
         for i in range(topk_indices.shape[0]):
             cls_topk_mask[i][topk_indices[i]] = True
         cls_topk_mask = cls_topk_mask.reshape(cls_input.shape[0],cls_input.shape[2],cls_input.shape[3])
         # pos_mask = cls_topk_mask.reshape(-1)
-        meshgrid_map = self.create_meshgrid_map(cls_input.size())
+        meshgrid_map = self.create_meshgrid_map(cls_input.size(), cls_input.device)
         meshgrid_pos = []
         for i in range(B):
             cur_meshgrid_map = meshgrid_map[i]
@@ -33,11 +33,11 @@ class LocSmoothL1Loss(nn.Module):
         meshgrid_pos = torch.stack(meshgrid_pos,dim=0)
         assert meshgrid_pos.shape[1] == self.topk
 
-        center_rate_map = torch.stack(center_rate, dim=1).reshape(B,1,2).repeat((1,self.topk,1)).cuda() #(B,2)
+        center_rate_map = torch.stack(center_rate, dim=1).reshape(B,1,2).repeat((1,self.topk,1)).to(cls_input.device) #(B,2)
         loc_loss = F.smooth_l1_loss(meshgrid_pos, center_rate_map, reduction='mean')
         return loc_loss * self.weight_rate
 
-    def create_meshgrid_map(self, size):
+    def create_meshgrid_map(self, size, device):
         b, c, h, w = size
         x = np.arange(h)
         y = np.arange(w)
@@ -45,7 +45,7 @@ class LocSmoothL1Loss(nn.Module):
         xx, yy = np.expand_dims(xx, -1), np.expand_dims(yy, -1)
         loc_map = np.expand_dims(np.concatenate((yy, xx), axis=-1), axis=0).repeat(b, axis=0)
         loc_map_normal = loc_map / [h-1, w-1]
-        return torch.from_numpy(loc_map_normal).cuda().float()
+        return torch.from_numpy(loc_map_normal).to(device).float()
 
 
 

@@ -7,6 +7,7 @@ import numpy as np
 def make_dataset(opt,train=True):
     if train:
         image_datasets = SiamUAVCenter(opt)
+        print(image_datasets.__len__())
         dataloaders =torch.utils.data.DataLoader(image_datasets,
                                                  batch_size=opt.data_config['batchsize'],
                                                  shuffle=True,

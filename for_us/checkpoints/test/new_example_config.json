@@ -9,13 +9,13 @@
     },
     "neck": {
       "type": "CCN",
-      "output_dims": 384,
+      "output_dims": 128,
       "UAV_output_index": [0],
       "Satellite_ouput_index": 0
     },
     "head": {
       "type":"ChannelEmbedding", 
-      "input_ndim": 384, 
+      "input_ndim": 128, 
       "mid_process_channels":[64, 16, 1]
 
     },
@@ -34,11 +34,11 @@
   },
   "data_config": {
     "batchsize": 8,
-    "num_worker": 0,
+    "num_worker": 8,
     "val_batchsize": 8,
-    "train_dir": "D:/CrossGeoLoc_clear_version/map2019/train",
-    "val_dir": "D:/CrossGeoLoc_clear_version/map2019/val",
-    "test_dir": "D:/CrossGeoLoc_clear_version/map2019/train",
+    "train_dir": "map2019/train",
+    "val_dir": "map2019/val",
+    "test_dir": "map2019/train",
     "test_mode": "merge_test_700-1800_cr0.95_stride100",
     "UAVhw": [192, 192],
     "Satellitehw": [576, 576]
@@ -77,9 +77,9 @@
     "num_epochs": 12
   },
   "test_config": {
-    "num_worker": 0,
+    "num_worker": 8,
     "filterR": 51,
-    "checkpoint": "output/net_best.pth"
+    "checkpoint": "net_best.pth"
   },
   "checkpoint_config": {
     "interval": 1,

@@ -2,7 +2,7 @@ import numpy as np
 import torch
 
 
-def create_labels_2(size, rate, center_R):
+def create_labels_2(size, rate, center_R,device):
     ratex, ratey = rate
     labels = np.zeros(size)
     b, c, h, w = size
@@ -15,11 +15,11 @@ def create_labels_2(size, rate, center_R):
         CenterX, CenterY = CenterXY[i]
         x1, x2, y1, y2 = CenterX, CenterX+center_R//2+1, CenterY, CenterY+center_R//2+1
         labels[i, 0, int(x1):int(x2), int(y1):int(y2)] = 1
-    labels_torch = torch.from_numpy(labels).cuda().float()
+    labels_torch = torch.from_numpy(labels).to(device).float()
     return labels_torch
 
 
-def create_labels(size, rate, center_R):
+def create_labels(size, rate, center_R,device):
     ratex, ratey = rate
     b, c, h, w = size
     labels = np.zeros((b,1,h,w))
@@ -54,5 +54,5 @@ def create_labels(size, rate, center_R):
         label_mask = new_label != -1
         new_label_out = label[label_mask].reshape(h, w)
         labels[i, :] = new_label_out
-    labels_torch = torch.from_numpy(labels).cuda().float()
+    labels_torch = torch.from_numpy(labels).to(device).float()
     return labels_torch

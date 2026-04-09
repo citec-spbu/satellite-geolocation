@@ -21,11 +21,12 @@ class BalanceLoss(nn.Module):
         self.gamma = gamma
 
     def forward(self, cls_input, center_rate):
+        device = cls_input.device
         # 等等分配
         if self.center_R == 2:
-            target = create_labels_2(cls_input.size(), center_rate, self.center_R)
+            target = create_labels_2(cls_input.size(), center_rate, self.center_R, device)
         else:
-            target = create_labels(cls_input.size(), center_rate, self.center_R)
+            target = create_labels(cls_input.size(), center_rate, self.center_R, device)
 
         pos_mask = (target == 1)
         neg_mask = (target == 0)
@@ -96,11 +97,11 @@ class CenterBalanceLoss(nn.Module):
     def forward(self, cls_input, center_rate):
         # calc cls loss
         if self.center_R == 2:
-            target = create_labels_2(cls_input.size(), center_rate, self.center_R)
-            weight = self.create_mask_2(cls_input.size(), center_rate)
+            target = create_labels_2(cls_input.size(), center_rate, self.center_R, cls_input.device)
+            weight = self.create_mask_2(cls_input.size(), center_rate, cls_input.device)
         else:
-            target = create_labels(cls_input.size(), center_rate, self.center_R)
-            weight = self.create_mask(cls_input.size(), center_rate)
+            target = create_labels(cls_input.size(), center_rate, self.center_R, cls_input.device)
+            weight = self.create_mask(cls_input.size(), center_rate, cls_input.device)
         pos_mask = (target == 1)
         neg_mask = (target == 0)
         neg_num = neg_mask.sum().float()
@@ -126,7 +127,7 @@ class CenterBalanceLoss(nn.Module):
             focal_loss = self.alpha * focal_loss
         return focal_loss.sum()
 
-    def create_mask_2(self, size, rate):
+    def create_mask_2(self, size, rate, device):
         ratex, ratey = rate
         labels = np.zeros(size)
         b, c, h, w = size
@@ -148,7 +149,7 @@ class CenterBalanceLoss(nn.Module):
             weight[1][0] = abs(centerx-(CenterX+1))*abs((centery-CenterY))
             weight[1][1] = abs(centerx-CenterX)*abs(centery-CenterY)
             labels[i, 0, int(x1):int(x2), int(y1):int(y2)] = weight
-        labels_torch = torch.from_numpy(labels).cuda().float()
+        labels_torch = torch.from_numpy(labels).to(device).float()
         return labels_torch
 
     def create_gaussian_mask(self, radius):
@@ -188,7 +189,7 @@ class CenterBalanceLoss(nn.Module):
         hann_window /= hann_window.sum()
         return hann_window[1:-1, 1:-1]
 
-    def create_mask(self, size, rate):
+    def create_mask(self, size, rate, device):
         ratex, ratey = rate
         labels = np.zeros(size)
         b, c, h, w = size
@@ -223,7 +224,7 @@ class CenterBalanceLoss(nn.Module):
             label_mask = new_label != -1
             new_label_out = label[label_mask].reshape(h, w)
             labels[i, :] = new_label_out
-        labels_torch = torch.from_numpy(labels).cuda().float()
+        labels_torch = torch.from_numpy(labels).to(device).float()
         return labels_torch
     
 
@@ -237,9 +238,9 @@ class CrossEntropyLoss(nn.Module):
     def forward(self, cls_input, center_rate):
         # 等等分配
         if self.center_R == 2:
-            target = create_labels_2(cls_input.size(), center_rate, self.center_R)
+            target = create_labels_2(cls_input.size(), center_rate, self.center_R, cls_input.device)
         else:
-            target = create_labels(cls_input.size(), center_rate, self.center_R)
+            target = create_labels(cls_input.size(), center_rate, self.center_R, cls_input.device)
 
         if self.use_softmax:
             cls_loss = self.cross_entropy_loss(cls_input, target)
@@ -271,9 +272,9 @@ class FocalLoss(nn.Module):
     def forward(self, cls_input, center_rate):
         # 等等分配
         if self.center_R == 2:
-            target = create_labels_2(cls_input.size(), center_rate, self.center_R)
+            target = create_labels_2(cls_input.size(), center_rate, self.center_R, cls_input.device)
         else:
-            target = create_labels(cls_input.size(), center_rate, self.center_R)
+            target = create_labels(cls_input.size(), center_rate, self.center_R, cls_input.device)
 
         cls_loss = self.focal_loss(cls_input,target,)
         return cls_loss * self.weight_rate
@@ -396,7 +397,7 @@ class GaussianFocalLoss(nn.Module):
 
     def gaussian_loss(self, cls_input, center_rate, radius):
         # calc cls loss
-        target = self.create_labels(cls_input.size(), center_rate)
+        target = self.create_labels(cls_input.size(), center_rate, cls_input.device)
         # gaussian windows
         gaussian_mask = torch.zeros_like(cls_input)
         b, c, h, w = gaussian_mask.shape
@@ -434,7 +435,7 @@ class GaussianFocalLoss(nn.Module):
         neg_loss = -(1 - pred + eps).log() * neg_weights * weight
         return (pos_loss+neg_loss).sum()
 
-    def create_labels(self, size, rate):
+    def create_labels(self, size, rate, device):
         ratex, ratey = rate
         labels = np.zeros(size)
         b, c, h, w = size
@@ -470,7 +471,7 @@ class GaussianFocalLoss(nn.Module):
             new_label_out = label[label_mask].reshape(h, w)
             labels[i, :] = new_label_out
 
-        labels_torch = torch.from_numpy(labels).cuda().float()
+        labels_torch = torch.from_numpy(labels).to(device).float()
         return labels_torch
 
 

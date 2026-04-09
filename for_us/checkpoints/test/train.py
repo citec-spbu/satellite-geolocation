@@ -87,7 +87,7 @@ def train_model(model, loss_func, opt, dataloaders, dataset_sizes):
 
     since = time.time()
 
-    scaler = GradScaler("cuda")
+    scaler = GradScaler(enabled=torch.cuda.is_available())
     
     best_RDS = 0
 
@@ -113,9 +113,8 @@ def train_model(model, loss_func, opt, dataloaders, dataset_sizes):
 
             if now_batch_size < opt.data_config["batchsize"]:  # skip the last batch
                 continue
-            if use_gpu:
-                z = z.to(opt.device)
-                x = x.to(opt.device)
+            z = z.to(opt.device)
+            x = x.to(opt.device)
 
             # zero the parameter gradients
             optimizer.zero_grad()
@@ -129,9 +128,7 @@ def train_model(model, loss_func, opt, dataloaders, dataset_sizes):
             outputs = model(z, x)
             # print("model_time:{}".format(time.time()-start_time))
             cls_loss, loc_loss = loss_func(outputs, [ratex, ratey])
-            loss = cls_loss + loc_loss
-            # backward + optimize only if in training phase
-            loss_backward = loss
+
             # start_time = time.time()
             if opt.use_gpu and opt.train_config["autocast"]:
                 with autocast():
@@ -210,8 +207,8 @@ def train_model(model, loss_func, opt, dataloaders, dataset_sizes):
             sample_nums = 0
             for uav, satellite, X, Y, uav_path, satellite_path in tqdm(dataloaders["val"]):
                 sample_nums += uav.shape[0]
-                z = uav.cuda()
-                x = satellite.cuda()
+                z = uav.to(opt.device)
+                x = satellite.to(opt.device)
                 rate_x = X/opt.data_config["Satellitehw"][0]
                 rate_y = Y/opt.data_config["Satellitehw"][1]
                 with torch.no_grad():
@@ -321,7 +318,7 @@ def train_model(model, loss_func, opt, dataloaders, dataset_sizes):
                 rate_y = Y/opt.data_config["Satellitehw"][1]
                 with torch.no_grad():
                     response, loc_bias = model(z, x)
-                    cls_loss, loc_loss = loss_func([response, loc_bias], [rate_x, rate_y])
+                    cls_loss, loc_loss = loss_func([response, loc_bias], device=opt.device,ratex=[rate_x, rate_y])
                 val_iter_loss = cls_loss + loc_loss
                 val_loss += val_iter_loss/len(dataloaders["val_sub"])
             # total loss
@@ -334,7 +331,6 @@ def train_model(model, loss_func, opt, dataloaders, dataset_sizes):
 
 if __name__ == '__main__':
     opt = get_config()
-    device='cpu'
     # init device
     setup_device(opt)
 
@@ -350,7 +346,7 @@ if __name__ == '__main__':
     opt.train_iters_per_epoch = len(dataloaders["train"])
 
     # init model
-    model = make_model(opt,device)
+    model = make_model(opt,opt.device)
     model = model.to(opt.device)
     
     # init loss

@@ -15,15 +15,15 @@ data_config:
   - 192
   - 192
   batchsize: 8
-  num_worker: 0
-  test_dir: D:/CrossGeoLoc_clear_version/map2019/train
+  num_worker: 8
+  test_dir: map2019/train
   test_mode: merge_test_700-1800_cr0.95_stride100
-  train_dir: D:/CrossGeoLoc_clear_version/map2019/train
+  train_dir: map2019/train
   val_batchsize: 8
-  val_dir: D:/CrossGeoLoc_clear_version/map2019/val
+  val_dir: map2019/val
 debug: true
 device: !!python/object/apply:torch.device
-- cpu
+- cuda
 gpu_ids: '0'
 load_from: null
 log_interval: 50
@@ -43,7 +43,7 @@ model:
     type: CvT
     vit_type: cvt13
   head:
-    input_ndim: 384
+    input_ndim: 128
     mid_process_channels:
     - 64
     - 16
@@ -58,7 +58,7 @@ model:
     UAV_output_index:
     - 0
     input_dims: *id001
-    output_dims: 384
+    output_dims: 128
     type: CCN
   postprocess:
     output_size:
@@ -90,11 +90,11 @@ pipline_config:
 resume_from: null
 seed: 42
 test_config:
-  checkpoint: output/net_best.pth
+  checkpoint: net_best.pth
   filterR: 51
-  num_worker: 0
+  num_worker: 8
 train_config:
   autocast: true
   num_epochs: 12
 train_iters_per_epoch: 846
-use_gpu: false
+use_gpu: true

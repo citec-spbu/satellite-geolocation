@@ -1,0 +1,10 @@
+[2026-04-09 23:59:15,648][INFO] MACs=30.362G, Params=39.360M
+[2026-04-09 23:59:15,649][INFO] start training!
+[2026-04-09 23:59:15,671][INFO] Epoch 1/12
+[2026-04-09 23:59:15,672][INFO] --------------------------------------------------
+[2026-04-10 00:13:22,954][INFO] [50/846] loss: 0.7020 cls_loss: 0.7020 loc_loss:0.0000 lr_backbone:0.000016 time:14m 7s 
+[2026-04-10 00:30:52,613][INFO] [100/846] loss: 0.4656 cls_loss: 0.4656 loc_loss:0.0000 lr_backbone:0.000031 time:17m 30s 
+[2026-04-10 00:45:44,392][INFO] [150/846] loss: 0.1341 cls_loss: 0.1341 loc_loss:0.0000 lr_backbone:0.000046 time:14m 52s 
+[2026-04-10 01:00:36,456][INFO] [200/846] loss: 0.0483 cls_loss: 0.0483 loc_loss:0.0000 lr_backbone:0.000061 time:14m 52s 
+[2026-04-10 01:15:07,507][INFO] [250/846] loss: 0.0454 cls_loss: 0.0454 loc_loss:0.0000 lr_backbone:0.000076 time:14m 31s 
+[2026-04-10 01:29:52,228][INFO] [300/846] loss: 0.0453 cls_loss: 0.0453 loc_loss:0.0000 lr_backbone:0.000091 time:14m 45s 
