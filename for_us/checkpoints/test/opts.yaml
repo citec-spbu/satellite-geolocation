@@ -3,9 +3,9 @@ backbone_output_channel: &id001
 - 192
 - 384
 checkpoint_config:
-  epoch_start_save: 6
+  epoch_start_save: 0
   interval: 1
-  only_save_best: true
+  only_save_best: false
 config: distill/new_example_config.json
 data_config:
   Satellitehw:
@@ -39,7 +39,7 @@ model:
     - 1
     - 2
     pretrain: true
-    pretrain_path: checkpoints/CvT-13-384x384-IN-22k.pth
+    pretrain_path: ''
     type: CvT
     vit_type: cvt13
   head:
@@ -90,7 +90,7 @@ pipline_config:
 resume_from: null
 seed: 42
 test_config:
-  checkpoint: net_best.pth
+  checkpoint: checkpoints/test/output/net_001.pth
   filterR: 51
   num_worker: 8
 train_config:

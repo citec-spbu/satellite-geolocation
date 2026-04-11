@@ -62,11 +62,23 @@ class FPI(nn.Module):
         return cls_out, reg_out
 
     def load_checkpoint(self, checkpoint_path=""):
-        ckpt = torch.load(checkpoint_path, map_location=self.device)
-        missing_keys, unexpected_keys = self.load_state_dict(ckpt, strict=False)
-        print("Load pretrained backbone checkpoint from:", checkpoint_path)
-        print("missing keys:", missing_keys)
-        print("unexpected keys:", unexpected_keys)
+        model_keys = set(self.state_dict().keys())
+        ckpt = torch.load(checkpoint_path, map_location="cpu")
+        new_state_dict = {}
+        for k, v in ckpt.items():
+            # вариант без префикса
+            if k in model_keys:
+                new_state_dict[k] = v
+            # вариант с префиксом
+            elif "backbone_uav.backbone." + k in model_keys:
+                new_state_dict["backbone_uav.backbone." + k] = v
+            else:
+                print("SKIP:", k)
+
+        missing, unexpected = self.load_state_dict(new_state_dict, strict=True)
+
+        print("missing:", missing)
+        print("unexpected:", unexpected)
 
 
 def make_model(opt,device):
@@ -74,5 +86,5 @@ def make_model(opt,device):
     model = FPI(opt,device=device)
     # if 'load_from' is not empty, load the pretrain checkpoint.
     if isinstance(opt.load_from, str) and len(opt.load_from) > 0:
-        model.load_checkpoint(opt.load_from)
+        model.load_checkpoint(checkpoint_path=opt.load_from)
     return model

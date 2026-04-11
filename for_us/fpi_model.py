@@ -56,15 +56,6 @@ def build_model(opt: object, device: Union[str, torch.device] = None) -> torch.n
     return model
 
 
-def load_checkpoint(model: torch.nn.Module, checkpoint_path: str, map_location: Union[str, torch.device] = 'cpu'):
-    checkpoint_path = os.path.abspath(checkpoint_path)
-    if not os.path.isfile(checkpoint_path):
-        raise FileNotFoundError(f'Checkpoint not found: {checkpoint_path}')
-    checkpoint = torch.load(checkpoint_path, map_location=map_location)
-    model.load_state_dict(checkpoint, strict=False)
-    return model
-
-
 class FPIInference:
     def __init__(self,
                  config_path: str,
@@ -74,6 +65,7 @@ class FPIInference:
         self.checkpoint_path = pathlib.Path(checkpoint_path).resolve()
         self.device = torch.device(device if device is not None else 'cpu')
         self.cfg = config(self.config_path)
+        self.cfg.load_from = str(self.checkpoint_path)
         self.model = build_model(self.cfg, device=self.device)
         self.model.eval()
 

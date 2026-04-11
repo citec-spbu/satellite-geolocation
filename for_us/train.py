@@ -5,7 +5,7 @@ from torch.cuda.amp import GradScaler
 import torch.backends.cudnn as cudnn
 import time
 from optimizers.make_optimizer import make_optimizer
-from torch.cuda.amp import autocast
+from torch.amp import autocast
 from distill.taskflow import make_model
 from datasets.make_dataloader import make_dataset
 from losses.make_loss import make_loss
@@ -21,6 +21,7 @@ from collections import defaultdict
 from tool.evaltools import Distance
 import datetime
 from distill.configuration_file import config
+from pathlib import Path
 
 def create_hanning_mask(center_R):
     hann_window = np.outer(  # np.outer 如果a，b是高维数组，函数会自动将其flatten成1维 ，用来求外积
@@ -101,6 +102,11 @@ def train_model(model, loss_func, opt, dataloaders, dataset_sizes):
 
         # Each epoch has a training and validation phase
         model.train()  # Set model to training mode
+        for name, param in model.named_parameters():
+            if "head" in name:
+                param.requires_grad = True
+            else:
+                param.requires_grad = False
         running_loss = 0.0
         iter_cls_loss = 0.0
         iter_loc_loss = 0.0
@@ -131,7 +137,7 @@ def train_model(model, loss_func, opt, dataloaders, dataset_sizes):
 
             # start_time = time.time()
             if opt.use_gpu and opt.train_config["autocast"]:
-                with autocast():
+                with autocast('cuda'):
                     outputs = model(z, x)
                     cls_loss, loc_loss = loss_func(outputs, [ratex, ratey])
                     loss = cls_loss + loc_loss
@@ -240,12 +246,9 @@ def train_model(model, loss_func, opt, dataloaders, dataset_sizes):
                     get_gps_x = S_X / opt.data_config["Satellitehw"][0]
                     get_gps_y = S_Y / opt.data_config["Satellitehw"][0]
                     path = satellite_path[ind].split("/")
+                    pathic=Path(satellite_path[ind].split(r"\Satellite")[0]).joinpath("GPS_info.json")
                     read_gps = json.load(
-                        open(
-                            os.path.join(
-                                satellite_path[ind].split("/Satellite")[0],
-                                "GPS_info.json"),
-                            'r', encoding="utf-8"))
+                        open(pathic,'r', encoding="utf-8"))
                     tl_E = read_gps["Satellite"][path[-1]]["tl_E"]
                     tl_N = read_gps["Satellite"][path[-1]]["tl_N"]
                     br_E = read_gps["Satellite"][path[-1]]["br_E"]
@@ -318,7 +321,7 @@ def train_model(model, loss_func, opt, dataloaders, dataset_sizes):
                 rate_y = Y/opt.data_config["Satellitehw"][1]
                 with torch.no_grad():
                     response, loc_bias = model(z, x)
-                    cls_loss, loc_loss = loss_func([response, loc_bias], device=opt.device,ratex=[rate_x, rate_y])
+                    cls_loss, loc_loss = loss_func([response, loc_bias], [rate_x, rate_y])
                 val_iter_loss = cls_loss + loc_loss
                 val_loss += val_iter_loss/len(dataloaders["val_sub"])
             # total loss

@@ -3,7 +3,7 @@
     "backbone": {
       "type": "CvT",
       "vit_type": "cvt13",
-      "pretrain_path": "checkpoints/CvT-13-384x384-IN-22k.pth",
+      "pretrain_path": "",
       "pretrain": true,
       "output_index": [0, 1, 2]
     },
@@ -79,11 +79,11 @@
   "test_config": {
     "num_worker": 8,
     "filterR": 51,
-    "checkpoint": "net_best.pth"
+    "checkpoint": "checkpoints/test/output/net_001.pth"
   },
   "checkpoint_config": {
     "interval": 1,
-    "epoch_start_save": 6,
-    "only_save_best": true
+    "epoch_start_save": 0,
+    "only_save_best": false
   }
 }

@@ -1,0 +1,19 @@
+[2026-04-11 23:52:50,763][INFO] MACs=30.362G, Params=39.360M
+[2026-04-11 23:52:50,764][INFO] start training!
+[2026-04-11 23:52:50,785][INFO] Epoch 1/12
+[2026-04-11 23:52:50,785][INFO] --------------------------------------------------
+[2026-04-11 23:55:52,541][INFO] [50/846] loss: 0.5472 cls_loss: 0.5472 loc_loss:0.0000 lr_backbone:0.000016 time:3m 2s 
+[2026-04-11 23:58:03,940][INFO] [100/846] loss: 0.4858 cls_loss: 0.4858 loc_loss:0.0000 lr_backbone:0.000031 time:2m 11s 
+[2026-04-12 00:00:13,122][INFO] [150/846] loss: 0.3798 cls_loss: 0.3798 loc_loss:0.0000 lr_backbone:0.000046 time:2m 9s 
+[2026-04-12 00:02:20,518][INFO] [200/846] loss: 0.2535 cls_loss: 0.2535 loc_loss:0.0000 lr_backbone:0.000061 time:2m 7s 
+[2026-04-12 00:04:30,039][INFO] [250/846] loss: 0.1471 cls_loss: 0.1471 loc_loss:0.0000 lr_backbone:0.000076 time:2m 10s 
+[2026-04-12 00:06:39,296][INFO] [300/846] loss: 0.0869 cls_loss: 0.0869 loc_loss:0.0000 lr_backbone:0.000091 time:2m 9s 
+[2026-04-12 00:08:48,432][INFO] [350/846] loss: 0.0609 cls_loss: 0.0609 loc_loss:0.0000 lr_backbone:0.000105 time:2m 9s 
+[2026-04-12 00:11:02,457][INFO] [400/846] loss: 0.0509 cls_loss: 0.0509 loc_loss:0.0000 lr_backbone:0.000120 time:2m 14s 
+[2026-04-12 00:16:35,912][INFO] [450/846] loss: 0.0472 cls_loss: 0.0472 loc_loss:0.0000 lr_backbone:0.000135 time:5m 33s 
+[2026-04-12 00:21:40,710][INFO] [500/846] loss: 0.0458 cls_loss: 0.0458 loc_loss:0.0000 lr_backbone:0.000150 time:5m 5s 
+[2026-04-12 00:26:44,224][INFO] [550/846] loss: 0.0453 cls_loss: 0.0453 loc_loss:0.0000 lr_backbone:0.000150 time:5m 4s 
+[2026-04-12 00:31:51,769][INFO] [600/846] loss: 0.0452 cls_loss: 0.0452 loc_loss:0.0000 lr_backbone:0.000150 time:5m 8s 
+[2026-04-12 00:36:58,163][INFO] [650/846] loss: 0.0451 cls_loss: 0.0451 loc_loss:0.0000 lr_backbone:0.000150 time:5m 6s 
+[2026-04-12 00:42:01,982][INFO] [700/846] loss: 0.0451 cls_loss: 0.0451 loc_loss:0.0000 lr_backbone:0.000150 time:5m 4s 
+[2026-04-12 00:47:07,815][INFO] [750/846] loss: 0.0451 cls_loss: 0.0451 loc_loss:0.0000 lr_backbone:0.000150 time:5m 6s 
