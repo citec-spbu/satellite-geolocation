@@ -1,12 +1,11 @@
 from __future__ import absolute_import, print_function
 
-import os
 import numpy as np
 from torch.utils.data import Dataset
 import glob
 import json
 from PIL import Image
-import cv2
+from pathlib import Path
 from .Augmentation import RandomCrop, RandomRotate90, EdgePadding, RandomResize, RotateAndCrop
 from torchvision import transforms
 from .Augmentation import RandomErasing
@@ -23,25 +22,25 @@ class SiamUAV_test(Dataset):
         mode = opt.data_config["test_mode"]
         self.opt = opt
         self.transform = self.get_transformer()
-        self.root_dir_train = os.path.join(self.root_dir, mode)
-        self.seq = glob.glob(os.path.join(self.root_dir_train, "*"))
+        self.root_dir_train = Path(self.root_dir) / mode
+        self.seq = glob.glob(str(self.root_dir_train / "*"))
         self.list_all_info = self.get_total_info()
 
     def get_total_info(self):
         list_all_info = []
         for seq in self.seq:
-            UAV = os.path.join(seq, "UAV/0.JPG")
-            Satellite_list = glob.glob(os.path.join(seq, "Satellite/*"))
-            with open(os.path.join(seq, "labels.json"), 'r', encoding='utf8') as fp:
+            UAV = Path(seq) / "UAV/0.JPG"
+            Satellite_list = glob.glob(str(Path(seq) / "Satellite"))
+            with open(Path(seq) / "labels.json", 'r', encoding='utf8') as fp:
                 json_context = json.load(fp)
-            with open(os.path.join(seq, "GPS_info.json"), "r", encoding='utf8') as fp:
+            with open(Path(seq) / "GPS_info.json", "r", encoding='utf8') as fp:
                 gps_info_context = json.load(fp)
             for s in Satellite_list:
                 single_dict = {}
                 single_dict["UAV"] = UAV
                 single_dict["UAV_GPS"] = gps_info_context["UAV"]
                 single_dict["Satellite"] = s
-                name = os.path.basename(s)
+                name = Path(s).name
                 single_dict["position"] = json_context[name]
                 single_dict["Satellite_INFO"] = gps_info_context["Satellite"][name]
                 list_all_info.append(single_dict)
@@ -101,21 +100,21 @@ class SiamUAV_val(Dataset):
         self.opt = opt
         self.transform = self.get_transformer()
         self.val_dir = opt.data_config["val_dir"]
-        self.seq = glob.glob(os.path.join(self.val_dir, "*"))
+        self.seq = glob.glob(str(Path(self.val_dir) / "*"))
         self.list_all_info = self.get_total_info()
 
     def get_total_info(self):
         list_all_info = []
         for seq in self.seq:
-            UAV = os.path.join(seq, "UAV/0.JPG")
-            Satellite_list = glob.glob(os.path.join(seq, "Satellite/*"))
-            with open(os.path.join(seq, "labels.json"), 'r', encoding='utf8') as fp:
+            UAV = Path(seq) / "UAV/0.JPG"
+            Satellite_list = glob.glob(str(Path(seq) / "Satellite/*"))
+            with open(Path(seq) / "labels.json", 'r', encoding='utf8') as fp:
                 json_context = json.load(fp)
             for s in Satellite_list:
                 single_dict = {}
                 single_dict["UAV"] = UAV
                 single_dict["Satellite"] = s
-                name = os.path.basename(s)
+                name = Path(s).name
                 single_dict["position"] = json_context[name]
                 list_all_info.append(single_dict)
         return list_all_info
@@ -169,7 +168,7 @@ class SiamUAVCenter(Dataset):
         self.opt = opt
         self.transform = self.get_transformers(opt)
         self.root_dir_train = opt.data_config["train_dir"]
-        self.seq = glob.glob(os.path.join(self.root_dir_train, "*"))
+        self.seq = glob.glob(str(Path(self.root_dir_train) / "*"))
 
     def get_transformers(self, opt):
         transform_uav_list = self.get_transformer(
@@ -231,14 +230,14 @@ class SiamUAVCenter(Dataset):
 
     def __getitem__(self, index):
         # load the json context
-        UAV_image_path = os.path.join(self.seq[index], "UAV", "0.JPG")
+        UAV_image_path = Path(self.seq[index]) / "UAV" / "0.JPG"
         UAV_image = Image.open(UAV_image_path)
         # UAV_image = self.UAVAugmentation(UAV_image)
         # UAV_image.show()
         UAV_image = self.transform["UAV"](UAV_image)
 
         Satellite_image_path = np.random.choice(
-            glob.glob(os.path.join(self.seq[index], "Satellite", "*.tif")), 1)[0]
+            glob.glob(str(Path(self.seq[index]) / "Satellite" / "*.tif")), 1)[0]
         Satellite_image = Image.open(Satellite_image_path)
 
         Satellite_info = self.transform["Satellite_Pre"](Satellite_image)

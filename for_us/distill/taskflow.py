@@ -64,21 +64,9 @@ class FPI(nn.Module):
     def load_checkpoint(self, checkpoint_path=""):
         model_keys = set(self.state_dict().keys())
         ckpt = torch.load(checkpoint_path, map_location="cpu")
-        new_state_dict = {}
-        for k, v in ckpt.items():
-            # вариант без префикса
-            if k in model_keys:
-                new_state_dict[k] = v
-            # вариант с префиксом
-            elif "backbone_uav.backbone." + k in model_keys:
-                new_state_dict["backbone_uav.backbone." + k] = v
-            else:
-                print("SKIP:", k)
-
-        missing, unexpected = self.load_state_dict(new_state_dict, strict=True)
-
-        print("missing:", missing)
-        print("unexpected:", unexpected)
+        self.backbone_uav.load_checkpoints(checkpoint_path=checkpoint_path)
+        self.backbone_satellite.load_checkpoints(checkpoint_path=checkpoint_path)
+        missing, unexpected = self.load_state_dict(ckpt, strict=False)
 
 
 def make_model(opt,device):

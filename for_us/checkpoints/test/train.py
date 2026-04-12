@@ -15,7 +15,6 @@ from tqdm import tqdm
 import numpy as np
 import cv2
 import random
-import os
 import json
 from collections import defaultdict
 from tool.evaltools import Distance
@@ -73,14 +72,14 @@ def setup_device(opt):
 def train_model(model, loss_func, opt, dataloaders, dataset_sizes):
     use_gpu = opt.use_gpu
     num_epochs = opt.train_config["num_epochs"]
-    output_dir = os.path.join("checkpoints", opt.name, "output")
-    os.makedirs(output_dir, exist_ok=True)
+    output_dir = Path("checkpoints") / opt.name / "output"
+    Path(output_dir).mkdir(parents=True, exist_ok=True)
     cur_time = datetime.datetime.now()
-    logger_file = os.path.join(output_dir, "train_{}.log".format(str(datetime.datetime.now()).replace(":", "-").replace(" ", "_")))
+    logger_file = output_dir / f"train_{str(cur_time).replace(':', '-').replace(' ', '_')}.log"
     logger = get_logger(logger_file)
     # init tensorboard writer
     tensorboard_writer = TensorBoardManager(
-        os.path.join(output_dir, "summary"))
+        output_dir / "summary")
     
     macs, params = calc_flops_params(
         model, (1, 3, opt.data_config['UAVhw'][0], opt.data_config['UAVhw'][1]), (1, 3, opt.data_config['Satellitehw'][0], opt.data_config['Satellitehw'][1]))

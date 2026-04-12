@@ -85,5 +85,6 @@
     "interval": 1,
     "epoch_start_save": 0,
     "only_save_best": false
-  }
+  },
+  "download_from": "checkpoints/CvT-13-384x384-IN-22k.pth"
 }

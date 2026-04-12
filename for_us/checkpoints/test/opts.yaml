@@ -23,9 +23,9 @@ data_config:
   val_dir: map2019/val
 debug: true
 device: !!python/object/apply:torch.device
-- cuda
+- cpu
 gpu_ids: '0'
-load_from: null
+load_from: checkpoints/CvT-13-384x384-IN-22k.pth
 log_interval: 50
 lr_config:
   lr: 0.00015
@@ -97,4 +97,4 @@ train_config:
   autocast: true
   num_epochs: 12
 train_iters_per_epoch: 846
-use_gpu: true
+use_gpu: false

@@ -12,7 +12,7 @@ class config():
         self.test_config=data['test_config']
         self.checkpoint_config=data['checkpoint_config']
         self.log_interval = 50
-        self.load_from = None
+        self.load_from = data['download_from']
         self.resume_from = None
         self.debug = True
         self.seed = 42
