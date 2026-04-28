@@ -1,0 +1,11 @@
+--index-url https://download.pytorch.org/whl/cu126
+torch
+torchvision
+torchaudio
+pyyaml
+tqdm
+numpy
+scipy
+matplotlib
+pillow
+timm
