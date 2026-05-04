@@ -77,7 +77,7 @@
     "num_epochs": 30
   },
   "test_config": {
-    "num_worker": 8,
+    "num_worker": 16,
     "filterR": 51,
     "checkpoint": "checkpoints/test/output/net_001.pth"
   },

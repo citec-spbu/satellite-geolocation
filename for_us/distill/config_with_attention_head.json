@@ -38,7 +38,7 @@
   },
   "data_config": {
     "batchsize": 8,
-    "num_worker": 8,
+    "num_worker": 16,
     "val_batchsize": 8,
     "train_dir": "map2019/train",
     "val_dir": "map2019/val",
@@ -81,7 +81,7 @@
     "num_epochs": 12
   },
   "test_config": {
-    "num_worker": 8,
+    "num_worker": 16,
     "filterR": 51,
     "checkpoint": "checkpoints/test/output/net_001.pth"
   },
