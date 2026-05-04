@@ -1,11 +1,9 @@
 {
   "model": {
     "backbone": {
-      "type": "CvT",
-      "vit_type": "cvt13",
-      "pretrain_path": "",
-      "pretrain": false,
-      "output_index": [0, 1, 2]
+      "type": "ViT-S",
+      "pretrain": true,
+      "output_index": [0]
     },
     "neck": {
       "type": "CCN",
@@ -14,13 +12,16 @@
       "Satellite_ouput_index": 0
     },
     "head": {
-        "type":"SingleGroupFusionHead",
-        "head_pool":"conv",
+        "type":"AttentionFusiomLib",
+        "fusion_type": "CAT_SA",
+        "head_pool":"linear",
         "dropout_rate": 0.1,
         "input_ndim": 128,
-        "mid_ndim": 128,
-        "attention_layer_num":0,
-        "linear_layer_num": 1
+        "mid_ndim": 256,
+        "attention_layer_num":4,
+        "linear_layer_num": 1,
+        "enable_position_embedding": true,
+        "pos_lenght": [128,383]
 
     },
     "postprocess": {
@@ -44,8 +45,8 @@
     "val_dir": "map2019/val",
     "test_dir": "map2019/train",
     "test_mode": "merge_test_700-1800_cr0.95_stride100",
-    "UAVhw": [192, 192],
-    "Satellitehw": [576, 576]
+    "UAVhw": [128, 128],
+    "Satellitehw": [384, 384]
   },
   "pipline_config": {
     "train_pipeline": {
@@ -54,7 +55,7 @@
           "probability": 0.3
         },
         "RandomResize": {
-          "img_size": [192, 192]
+          "img_size": [128, 128]
         },
         "ToTensor": {}
       },
@@ -64,21 +65,21 @@
           "map_size": [512, 1000]
         },
         "RandomResize": {
-          "img_size": [576, 576]
+          "img_size": [384, 384]
         },
         "ToTensor": {}
       }
     }
   },
   "lr_config": {
-    "lr": 0.00015,
+    "lr": 0.00005,
     "type": "cosine",
     "warmup_iters": 500,
     "warmup_ratio": 0.01
   },
   "train_config": {
     "autocast": true,
-    "num_epochs": 12
+    "num_epochs": 30
   },
   "test_config": {
     "num_worker": 16,
@@ -90,5 +91,5 @@
     "epoch_start_save": 0,
     "only_save_best": false
   },
-  "download_from": "checkpoints/CvT-13-384x384-IN-22k.pth"
+  "download_from": ""
 }
