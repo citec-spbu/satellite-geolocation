@@ -36,9 +36,9 @@
     "batchsize": 8,
     "num_worker": 8,
     "val_batchsize": 8,
-    "train_dir": "map2019/map2019/train",
-    "val_dir": "map2019/map2019/val",
-    "test_dir": "map2019/map2019/train",
+    "train_dir": "map2019/train",
+    "val_dir": "map2019/val",
+    "test_dir": "map2019/train",
     "test_mode": "merge_test_700-1800_cr0.95_stride100",
     "UAVhw": [192, 192],
     "Satellitehw": [576, 576]
@@ -74,7 +74,7 @@
   },
   "train_config": {
     "autocast": true,
-    "num_epochs": 12
+    "num_epochs": 30
   },
   "test_config": {
     "num_worker": 8,

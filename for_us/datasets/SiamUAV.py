@@ -71,23 +71,23 @@ class SiamUAV_test(Dataset):
     def __getitem__(self, index):
         single_info = self.list_all_info[index]
         UAV_image_path = single_info["UAV"]
-        UAV_image = Image.open(UAV_image_path)
-        UAV_image = self.transform["UAV"](UAV_image)
+        with Image.open(UAV_image_path) as img:
+            UAV_image = self.transform["UAV"](img)
 
         Satellite_image_path = single_info["Satellite"]
-        Satellite_image_ = Image.open(Satellite_image_path)
-        Satellite_image = self.transform["satellite"](Satellite_image_)
+        with Image.open(Satellite_image_path) as img:
+            Satellite_image = self.transform["satellite"](img)
         X, Y = single_info["position"]
-        X = int(X/Satellite_image_.height *
+        X = int(X/Satellite_image.height *
                 self.opt.data_config["Satellitehw"][0])
-        Y = int(Y/Satellite_image_.width *
+        Y = int(Y/Satellite_image.width *
                 self.opt.data_config["Satellitehw"][1])
 
         UAV_GPS = single_info["UAV_GPS"]
         # tl_E,tl_N,br_E,br_N,center_distribute_X,center_distribute_Y,map_size
         Satellite_INFO = single_info["Satellite_INFO"]
 
-        return [UAV_image, Satellite_image, X, Y, UAV_image_path, Satellite_image_path, UAV_GPS, Satellite_INFO]
+        return [UAV_image, Satellite_image, X, Y, str(UAV_image_path), str(Satellite_image_path), UAV_GPS, Satellite_INFO]
 
 
 class SiamUAV_val(Dataset):
@@ -143,20 +143,32 @@ class SiamUAV_val(Dataset):
 
     def __getitem__(self, index):
         single_info = self.list_all_info[index]
+
+        # --- UAV ---
         UAV_image_path = single_info["UAV"]
-        UAV_image = Image.open(UAV_image_path)
-        UAV_image = self.transform["UAV"](UAV_image)
+        with Image.open(UAV_image_path) as img:
+            UAV_image = self.transform["UAV"](img)
 
+        # --- Satellite ---
         Satellite_image_path = single_info["Satellite"]
-        Satellite_image_ = Image.open(Satellite_image_path)
-        Satellite_image = self.transform["satellite"](Satellite_image_)
-        X, Y = single_info["position"]
-        X = int(X/Satellite_image_.height *
-                self.opt.data_config["Satellitehw"][0])
-        Y = int(Y/Satellite_image_.width *
-                self.opt.data_config["Satellitehw"][1])
-        return [UAV_image, Satellite_image, X, Y, UAV_image_path, Satellite_image_path]
+        with Image.open(Satellite_image_path) as img:
+            orig_h, orig_w = img.height, img.width  
+            Satellite_image = self.transform["satellite"](img)
 
+        # --- Coordinates ---
+        X, Y = single_info["position"]
+
+        X = int(X / orig_h * self.opt.data_config["Satellitehw"][0])
+        Y = int(Y / orig_w * self.opt.data_config["Satellitehw"][1])
+
+        return (
+            UAV_image,
+            Satellite_image,
+            X,
+            Y,
+            str(UAV_image_path),
+            str(Satellite_image_path),
+        )
 
 class SiamUAVCenter(Dataset):
     def __init__(self, opt):
@@ -238,12 +250,9 @@ class SiamUAVCenter(Dataset):
 
         Satellite_image_path = np.random.choice(
             glob.glob(str(Path(self.seq[index]) / "Satellite" / "*.tif")), 1)[0]
-        Satellite_image = Image.open(Satellite_image_path)
-
-        Satellite_info = self.transform["Satellite_Pre"](Satellite_image)
-        
-        Satellite_image, [ratex, ratey] = Satellite_info
-        
-        Satellite_image = self.transform["Satellite"](Satellite_image)
+        with Image.open(Satellite_image_path) as Satellite_image:
+            Satellite_info = self.transform["Satellite_Pre"](Satellite_image)
+            Satellite_image, [ratex, ratey] = Satellite_info
+            Satellite_image = self.transform["Satellite"](Satellite_image)
 
         return [UAV_image, Satellite_image, ratex, ratey]

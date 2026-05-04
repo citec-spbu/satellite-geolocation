@@ -63,7 +63,7 @@ class FPI(nn.Module):
 
     def load_checkpoint(self, checkpoint_path=""):
         model_keys = set(self.state_dict().keys())
-        ckpt = torch.load(checkpoint_path, map_location="cpu")
+        ckpt = torch.load(checkpoint_path, map_location="cuda")
         self.backbone_uav.load_checkpoints(checkpoint_path=checkpoint_path)
         self.backbone_satellite.load_checkpoints(checkpoint_path=checkpoint_path)
         missing, unexpected = self.load_state_dict(ckpt, strict=False)

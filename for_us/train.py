@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 import argparse
 import torch
-from torch.cuda.amp import GradScaler
+from torch.amp import GradScaler
 import torch.backends.cudnn as cudnn
 import time
 from optimizers.make_optimizer import make_optimizer
@@ -102,7 +102,7 @@ def train_model(model, loss_func, opt, dataloaders, dataset_sizes):
         # Each epoch has a training and validation phase
         model.train()  # Set model to training mode
         for name, param in model.named_parameters():
-            if "head" in name:
+            if ("head" in name) or ("neck" in name):
                 param.requires_grad = True
             else:
                 param.requires_grad = False
@@ -130,11 +130,8 @@ def train_model(model, loss_func, opt, dataloaders, dataset_sizes):
             #     with autocast():
             #         outputs = model(z, x)  # satellite and drone
             # else:
-            outputs = model(z, x)
-            # print("model_time:{}".format(time.time()-start_time))
-            cls_loss, loc_loss = loss_func(outputs, [ratex, ratey])
+            optimizer.zero_grad()
 
-            # start_time = time.time()
             if opt.use_gpu and opt.train_config["autocast"]:
                 with autocast('cuda'):
                     outputs = model(z, x)
@@ -151,7 +148,6 @@ def train_model(model, loss_func, opt, dataloaders, dataset_sizes):
 
                 loss.backward()
                 optimizer.step()
-
             scheduler.step()
             # print("loss_backward_time:{}".format(time.time()-start_time))
 
@@ -244,14 +240,14 @@ def train_model(model, loss_func, opt, dataloaders, dataset_sizes):
                     # 获取预测的经纬度信息
                     get_gps_x = S_X / opt.data_config["Satellitehw"][0]
                     get_gps_y = S_Y / opt.data_config["Satellitehw"][0]
-                    path = satellite_path[ind].split("/")
+                    path = Path(satellite_path[ind]).parts
                     pathic=Path(satellite_path[ind].split(r"\Satellite")[0]).joinpath("GPS_info.json")
                     read_gps = json.load(
                         open(pathic,'r', encoding="utf-8"))
-                    tl_E = read_gps["Satellite"][path[-1]]["tl_E"]
-                    tl_N = read_gps["Satellite"][path[-1]]["tl_N"]
-                    br_E = read_gps["Satellite"][path[-1]]["br_E"]
-                    br_N = read_gps["Satellite"][path[-1]]["br_N"]
+                    tl_E = read_gps["Satellite"][str(path[-1])]["tl_E"]
+                    tl_N = read_gps["Satellite"][str(path[-1])]["tl_N"]
+                    br_E = read_gps["Satellite"][str(path[-1])]["br_E"]
+                    br_N = read_gps["Satellite"][str(path[-1])]["br_N"]
                     UAV_GPS_E = read_gps["UAV"]["E"]
                     UAV_GPS_N = read_gps["UAV"]["N"]
                     PRE_GPS_E = tl_E + (br_E - tl_E) * get_gps_y  # 经度
@@ -260,7 +256,6 @@ def train_model(model, loss_func, opt, dataloaders, dataset_sizes):
                     # 统计MA指标
                     meter_distance = Distance(
                         UAV_GPS_N, UAV_GPS_E, PRE_GPS_N, PRE_GPS_E)
-                    MA_json_save.append(meter_distance)
                     for meter in MA_log_list:
                         if meter_distance <= meter:
                             MA_dict[meter] += 1
@@ -283,7 +278,7 @@ def train_model(model, loss_func, opt, dataloaders, dataset_sizes):
                         single_score_b = evaluate(
                             opt, pred_XY=pred_XY_b, label_XY=label_XY)
                         total_score_b += single_score_b
-
+                del maps, satellite_map
                     # print("pred: " + str(pred_XY) + " label: " +str(label_XY) +" score:{}".format(single_score))
                     # TODO:将可视化图像添加到tensorboard中
 
