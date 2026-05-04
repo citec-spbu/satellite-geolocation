@@ -241,7 +241,7 @@ def train_model(model, loss_func, opt, dataloaders, dataset_sizes):
                     get_gps_x = S_X / opt.data_config["Satellitehw"][0]
                     get_gps_y = S_Y / opt.data_config["Satellitehw"][0]
                     path = Path(satellite_path[ind]).parts
-                    pathic=Path(satellite_path[ind].split(r"\Satellite")[0]).joinpath("GPS_info.json")
+                    pathic=Path(satellite_path[ind].split(r"Satellite")[0]).joinpath("GPS_info.json")
                     read_gps = json.load(
                         open(pathic,'r', encoding="utf-8"))
                     tl_E = read_gps["Satellite"][path[-1]]["tl_E"]
