@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 import argparse
 import torch
-from torch.amp import GradScaler
+from torch.cuda.amp import GradScaler
 import torch.backends.cudnn as cudnn
 import time
 from optimizers.make_optimizer import make_optimizer
@@ -87,7 +87,7 @@ def train_model(model, loss_func, opt, dataloaders, dataset_sizes):
 
     since = time.time()
 
-    scaler = GradScaler(enabled=torch.cuda.is_available())
+    scaler = torch.amp.GradScaler('cuda')
     
     best_RDS = 0
 
@@ -102,7 +102,7 @@ def train_model(model, loss_func, opt, dataloaders, dataset_sizes):
         # Each epoch has a training and validation phase
         model.train()  # Set model to training mode
         for name, param in model.named_parameters():
-            if ("head" in name) or ("neck" in name):
+            if "head" in name:
                 param.requires_grad = True
             else:
                 param.requires_grad = False
@@ -130,8 +130,11 @@ def train_model(model, loss_func, opt, dataloaders, dataset_sizes):
             #     with autocast():
             #         outputs = model(z, x)  # satellite and drone
             # else:
-            optimizer.zero_grad()
+            outputs = model(z, x)
+            # print("model_time:{}".format(time.time()-start_time))
+            cls_loss, loc_loss = loss_func(outputs, [ratex, ratey])
 
+            # start_time = time.time()
             if opt.use_gpu and opt.train_config["autocast"]:
                 with autocast('cuda'):
                     outputs = model(z, x)
@@ -148,6 +151,7 @@ def train_model(model, loss_func, opt, dataloaders, dataset_sizes):
 
                 loss.backward()
                 optimizer.step()
+
             scheduler.step()
             # print("loss_backward_time:{}".format(time.time()-start_time))
 
@@ -163,7 +167,6 @@ def train_model(model, loss_func, opt, dataloaders, dataset_sizes):
                 iter_cls_loss = iter_cls_loss/opt.log_interval/now_batch_size
                 iter_loc_loss = iter_loc_loss/opt.log_interval/now_batch_size
 
-                lr_backbone = optimizer.state_dict()['param_groups'][0]['lr']
 
                 tensorboard_writer.add_scalar(
                     "loss/total_loss", iter_loss, epoch*total_iters+iter)
@@ -171,11 +174,9 @@ def train_model(model, loss_func, opt, dataloaders, dataset_sizes):
                     "loss/cls_loss", iter_cls_loss, epoch*total_iters+iter)
                 tensorboard_writer.add_scalar(
                     "loss/loc_loss", iter_loc_loss, epoch*total_iters+iter)
-                tensorboard_writer.add_scalar(
-                    "lr", lr_backbone, epoch*total_iters+iter)
 
-                logger.info("[{}/{}] loss: {:.4f} cls_loss: {:.4f} loc_loss:{:.4f} lr_backbone:{:.6f} time:{:.0f}m {:.0f}s ".format(
-                    iter + 1, total_iters, iter_loss, iter_cls_loss, iter_loc_loss, lr_backbone, time_elapsed_part // 60, time_elapsed_part % 60))
+                logger.info("[{}/{}] loss: {:.4f} cls_loss: {:.4f} loc_loss:{:.4f} time:{:.0f}m {:.0f}s ".format(
+                    iter + 1, total_iters, iter_loss, iter_cls_loss, iter_loc_loss, time_elapsed_part // 60, time_elapsed_part % 60))
                 iter_loss = 0.0
                 iter_loc_loss = 0.0
                 iter_cls_loss = 0.0
@@ -183,11 +184,10 @@ def train_model(model, loss_func, opt, dataloaders, dataset_sizes):
 
         epoch_loss = running_loss / dataset_sizes['satellite']
 
-        lr_backbone = optimizer.state_dict()['param_groups'][0]['lr']
 
         time_elapsed = time.time() - since
-        logger.info('Epoch[{}/{}] Loss: {:.4f}  lr_backbone:{:.6f}  time:{:.0f}m {:.0f}s'.format(
-            epoch+1, num_epochs, epoch_loss, lr_backbone, time_elapsed // 60, time_elapsed % 60))
+        logger.info('Epoch[{}/{}] Loss: {:.4f} time:{:.0f}m {:.0f}s'.format(
+            epoch+1, num_epochs, epoch_loss, time_elapsed // 60, time_elapsed % 60))
 
         # ----------------------save and test the model------------------------------ #
         if ((epoch + 1)-opt.checkpoint_config["epoch_start_save"]) % opt.checkpoint_config["interval"] == 0 and (epoch+1) >= opt.checkpoint_config["epoch_start_save"] or (epoch+1 == opt.train_config["num_epochs"]):
@@ -244,10 +244,10 @@ def train_model(model, loss_func, opt, dataloaders, dataset_sizes):
                     pathic=Path(satellite_path[ind].split(r"\Satellite")[0]).joinpath("GPS_info.json")
                     read_gps = json.load(
                         open(pathic,'r', encoding="utf-8"))
-                    tl_E = read_gps["Satellite"][str(path[-1])]["tl_E"]
-                    tl_N = read_gps["Satellite"][str(path[-1])]["tl_N"]
-                    br_E = read_gps["Satellite"][str(path[-1])]["br_E"]
-                    br_N = read_gps["Satellite"][str(path[-1])]["br_N"]
+                    tl_E = read_gps["Satellite"][path[-1]]["tl_E"]
+                    tl_N = read_gps["Satellite"][path[-1]]["tl_N"]
+                    br_E = read_gps["Satellite"][path[-1]]["br_E"]
+                    br_N = read_gps["Satellite"][path[-1]]["br_N"]
                     UAV_GPS_E = read_gps["UAV"]["E"]
                     UAV_GPS_N = read_gps["UAV"]["N"]
                     PRE_GPS_E = tl_E + (br_E - tl_E) * get_gps_y  # 经度
@@ -256,6 +256,7 @@ def train_model(model, loss_func, opt, dataloaders, dataset_sizes):
                     # 统计MA指标
                     meter_distance = Distance(
                         UAV_GPS_N, UAV_GPS_E, PRE_GPS_N, PRE_GPS_E)
+                    MA_json_save.append(meter_distance)
                     for meter in MA_log_list:
                         if meter_distance <= meter:
                             MA_dict[meter] += 1
@@ -278,7 +279,7 @@ def train_model(model, loss_func, opt, dataloaders, dataset_sizes):
                         single_score_b = evaluate(
                             opt, pred_XY=pred_XY_b, label_XY=label_XY)
                         total_score_b += single_score_b
-                del maps, satellite_map
+
                     # print("pred: " + str(pred_XY) + " label: " +str(label_XY) +" score:{}".format(single_score))
                     # TODO:将可视化图像添加到tensorboard中
 
