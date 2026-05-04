@@ -74,7 +74,7 @@
   },
   "train_config": {
     "autocast": true,
-    "num_epochs": 30
+    "num_epochs": 50
   },
   "test_config": {
     "num_worker": 16,

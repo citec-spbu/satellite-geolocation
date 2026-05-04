@@ -102,7 +102,7 @@ def train_model(model, loss_func, opt, dataloaders, dataset_sizes):
         # Each epoch has a training and validation phase
         model.train()  # Set model to training mode
         for name, param in model.named_parameters():
-            if "head" in name:
+            if "head" in name or "neck" in name:
                 param.requires_grad = True
             else:
                 param.requires_grad = False
