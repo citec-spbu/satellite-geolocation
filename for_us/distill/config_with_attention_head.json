@@ -12,7 +12,7 @@
       "Satellite_ouput_index": 0
     },
     "head": {
-        "type":"AttentionFusiomLib",
+        "type":"AttentionFusionLib",
         "fusion_type": "CAT_SA",
         "head_pool":"linear",
         "dropout_rate": 0.1,
