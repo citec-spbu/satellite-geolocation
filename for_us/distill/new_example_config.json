@@ -8,7 +8,7 @@
       "output_index": [0, 1, 2]
     },
     "neck": {
-      "type": "CCN",
+      "type": "FPN_I3",
       "output_dims": 128,
       "UAV_output_index": [0],
       "Satellite_ouput_index": 0
@@ -34,7 +34,7 @@
   },
   "data_config": {
     "batchsize": 8,
-    "num_worker": 8,
+    "num_worker": 16,
     "val_batchsize": 8,
     "train_dir": "map2019/train",
     "val_dir": "map2019/val",
