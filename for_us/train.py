@@ -33,7 +33,7 @@ def create_hanning_mask(center_R):
 def get_config():
     parser = argparse.ArgumentParser(description='Training')
     parser.add_argument(
-        '--config', default=r'distill/config_with_attention_head.json',
+        '--config', default=r'distill/new_example_config.json',
         type=str, help='config filename')
     parser.add_argument('--gpu_ids', default='0', type=str,
                         help='gpu_ids: e.g. 0  0,1,2  0,2')
@@ -101,11 +101,11 @@ def train_model(model, loss_func, opt, dataloaders, dataset_sizes):
 
         # Each epoch has a training and validation phase
         model.train()  # Set model to training mode
-        for name, param in model.named_parameters():
-            if "head" in name or "neck" in name:
-                param.requires_grad = True
-            else:
-                param.requires_grad = False
+        # for name, param in model.named_parameters():
+        #     if "head" in name or "neck" in name:
+        #         param.requires_grad = True
+        #     else:
+        #         param.requires_grad = False
         running_loss = 0.0
         iter_cls_loss = 0.0
         iter_loc_loss = 0.0
@@ -166,7 +166,7 @@ def train_model(model, loss_func, opt, dataloaders, dataset_sizes):
                 iter_loss = iter_loss/opt.log_interval/now_batch_size
                 iter_cls_loss = iter_cls_loss/opt.log_interval/now_batch_size
                 iter_loc_loss = iter_loc_loss/opt.log_interval/now_batch_size
-
+                lr_backbone = optimizer.state_dict()['param_groups'][0]['lr']
 
                 tensorboard_writer.add_scalar(
                     "loss/total_loss", iter_loss, epoch*total_iters+iter)
@@ -174,6 +174,8 @@ def train_model(model, loss_func, opt, dataloaders, dataset_sizes):
                     "loss/cls_loss", iter_cls_loss, epoch*total_iters+iter)
                 tensorboard_writer.add_scalar(
                     "loss/loc_loss", iter_loc_loss, epoch*total_iters+iter)
+                tensorboard_writer.add_scalar(
+                    "learning_rate/backbone", lr_backbone, epoch*total_iters+iter)
 
                 logger.info("[{}/{}] loss: {:.4f} cls_loss: {:.4f} loc_loss:{:.4f} time:{:.0f}m {:.0f}s ".format(
                     iter + 1, total_iters, iter_loss, iter_cls_loss, iter_loc_loss, time_elapsed_part // 60, time_elapsed_part % 60))
@@ -183,7 +185,7 @@ def train_model(model, loss_func, opt, dataloaders, dataset_sizes):
                 iter_start = time.time()
 
         epoch_loss = running_loss / dataset_sizes['satellite']
-
+        lr_backbone = optimizer.state_dict()['param_groups'][0]['lr']
 
         time_elapsed = time.time() - since
         logger.info('Epoch[{}/{}] Loss: {:.4f} time:{:.0f}m {:.0f}s'.format(
