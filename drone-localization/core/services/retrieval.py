@@ -1,4 +1,5 @@
 from dataclasses import dataclass
+from utils.retrieval_helpers import base64_to_tensor
 
 @dataclass
 class RetrievalResult:
@@ -25,5 +26,13 @@ class RetrievalService:
         # 3. Найди ближайший в базе (FAISS / простой поиск)
         # 4. Загрузи картинку спутника, переведи в base64
 
+        # 1.
+        drone_tensor = base64_to_tensor(drone_image_b64)
+        
+        # 2.
+        embeddings = self.model(drone_tensor)
+
+
         # Сейчас возвращаем заглушку для проверки API:
-        return RetrievalResult(image="mock_satellite_base64...", score=0.94)
+        VALID_BLANK_IMAGE = "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg=="
+        return RetrievalResult(image=VALID_BLANK_IMAGE, score=0.94)
