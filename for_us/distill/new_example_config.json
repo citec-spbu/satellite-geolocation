@@ -5,10 +5,10 @@
       "vit_type": "cvt13",
       "pretrain_path": "",
       "pretrain": true,
-      "output_index": [0, 1, 2]
+      "output_index": [-1]
     },
     "neck": {
-      "type": "FPN_I3",
+      "type": "CCN",
       "output_dims": 128,
       "UAV_output_index": [0],
       "Satellite_ouput_index": 0
