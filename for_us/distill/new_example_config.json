@@ -30,11 +30,10 @@
         "center_R": 31,
         "neg_weight": 130
       },
-      "reg_loss":{
-        "type": "SmoothL1Loss",
-        "center_R": 3,
-        "weight_rate": 1.0,
-        "score_thr": 0.0
+      "loc_loss":{
+        "type": "LocSmoothL1Loss",
+        "topk": 1,
+        "weight_rate": 1.0
       }
     }
   },
