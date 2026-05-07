@@ -5,19 +5,18 @@
       "vit_type": "cvt13",
       "pretrain_path": "",
       "pretrain": true,
-      "output_index": [-1]
+      "output_index": [0, 1, 2]
     },
     "neck": {
-      "type": "CCN",
+      "type": "FPN_I3",
       "output_dims": 128,
       "UAV_output_index": [0],
       "Satellite_ouput_index": 0
     },
     "head": {
-        "type":"SingleGroupFusionHead",
-        "head_pool":"avg",
-        "ut_scale": 0.0001
-
+      "type":"ChannelEmbedding", 
+      "input_ndim": 128, 
+      "mid_process_channels":[64, 16, 1]
 
     },
     "postprocess": {
@@ -33,8 +32,8 @@
       },
       "reg_loss":{
         "type": "SmoothL1Loss",
-        "weight_rate": 1.0,
         "center_R": 3,
+        "weight_rate": 1.0,
         "score_thr": 0.0
       }
     }
