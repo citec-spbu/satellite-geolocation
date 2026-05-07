@@ -8,7 +8,7 @@
       "output_index": [0, 1, 2]
     },
     "neck": {
-      "type": "CCN",
+      "type": "FPN_I3",
       "output_dims": 128,
       "UAV_output_index": [0],
       "Satellite_ouput_index": 0
