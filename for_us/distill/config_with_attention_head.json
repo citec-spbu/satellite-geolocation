@@ -34,6 +34,11 @@
         "type": "BalanceLoss",
         "center_R": 31,
         "neg_weight": 130
+      },
+      "loc_loss":{
+        "type": "LocSmoothL1Loss",
+        "topk": 1,
+        "weight_rate": 1.0
       }
     }
   },

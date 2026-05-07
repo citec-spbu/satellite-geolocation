@@ -33,7 +33,7 @@ def create_hanning_mask(center_R):
 def get_config():
     parser = argparse.ArgumentParser(description='Training')
     parser.add_argument(
-        '--config', default=r'distill/new_example_config.json',
+        '--config', default=r'distill/config_with_attention_head.json',
         type=str, help='config filename')
     parser.add_argument('--gpu_ids', default='0', type=str,
                         help='gpu_ids: e.g. 0  0,1,2  0,2')
