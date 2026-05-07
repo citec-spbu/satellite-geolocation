@@ -81,9 +81,9 @@ def train_model(model, loss_func, opt, dataloaders, dataset_sizes):
     tensorboard_writer = TensorBoardManager(
         output_dir / "summary")
     
-    macs, params = calc_flops_params(
-        model, (1, 3, opt.data_config['UAVhw'][0], opt.data_config['UAVhw'][1]), (1, 3, opt.data_config['Satellitehw'][0], opt.data_config['Satellitehw'][1]))
-    logger.info("MACs={}, Params={}".format(macs, params))
+    #macs, params = calc_flops_params(
+    #   model, (1, 3, opt.data_config['UAVhw'][0], opt.data_config['UAVhw'][1]), (1, 3, opt.data_config['Satellitehw'][0], opt.data_config['Satellitehw'][1]))
+    #logger.info("MACs={}, Params={}".format(macs, params))
 
     since = time.time()
 
