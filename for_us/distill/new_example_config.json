@@ -14,16 +14,10 @@
       "Satellite_ouput_index": 0
     },
     "head": {
-        "type":"AttentionFusionLib",
-        "fusion_type": "CAT_SA",
-        "head_pool":"linear",
-        "dropout_rate": 0.1,
-        "input_ndim": 128,
-        "mid_ndim": 256,
-        "attention_layer_num":4,
-        "linear_layer_num": 1,
-        "enable_position_embedding": true,
-        "pos_lenght": [128,383]
+        "type":"SingleGroupFusionHead",
+        "head_pool":"avg",
+        "ut_scale": 0.0001
+
 
     },
     "postprocess": {
