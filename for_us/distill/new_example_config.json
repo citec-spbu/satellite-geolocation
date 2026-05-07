@@ -8,15 +8,22 @@
       "output_index": [0, 1, 2]
     },
     "neck": {
-      "type": "FPN_I3",
+      "type": "CCN",
       "output_dims": 128,
       "UAV_output_index": [0],
       "Satellite_ouput_index": 0
     },
     "head": {
-      "type":"ChannelEmbedding", 
-      "input_ndim": 128, 
-      "mid_process_channels":[64, 16, 1]
+        "type":"AttentionFusionLib",
+        "fusion_type": "CAT_SA",
+        "head_pool":"linear",
+        "dropout_rate": 0.1,
+        "input_ndim": 128,
+        "mid_ndim": 256,
+        "attention_layer_num":4,
+        "linear_layer_num": 1,
+        "enable_position_embedding": true,
+        "pos_lenght": [128,383]
 
     },
     "postprocess": {
@@ -29,6 +36,12 @@
         "type": "BalanceLoss",
         "center_R": 31,
         "neg_weight": 130
+      },
+      "reg_loss":{
+        "type": "SmoothL1Loss",
+        "weight_rate": 1.0,
+        "center_R": 3,
+        "score_thr": 0.0
       }
     }
   },
