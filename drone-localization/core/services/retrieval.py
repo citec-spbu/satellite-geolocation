@@ -24,13 +24,12 @@ class RetrievalService:
             self.model = "mock_encoder"  # заглушка
             print(f"✅ Retrieval model loaded on {self.device}")
     
-    def find_match(self, drone_image_b64: str, top_k: int = 1) -> RetrievalResult:
+    def find_match(self, drone_image_b64: str) -> RetrievalResult:
         """
         Находит ближайший спутниковый тайл
         
         Args:
             drone_image_b64: Base64 изображение с дрона
-            top_k: Количество кандидатов (пока не используется)
         
         Returns:
             RetrievalResult с лучшим совпадением
@@ -50,7 +49,7 @@ class RetrievalService:
         
         return RetrievalResult(
             image=VALID_BLANK_IMAGE,
-            score=0.94,
+            score=0.8,
             tile_id="mock_tile_001",
             coordinates={"lat": 59.9343, "lon": 30.3351}  # Санкт-Петербург
         )
