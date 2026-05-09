@@ -2,7 +2,7 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 import numpy as np
-from backbone_convnext import convnext_tiny
+from core.models.ConvNext.backbone_convnext import convnext_tiny
 
 
 class Gem_heat(nn.Module):

@@ -1,5 +1,5 @@
 import torch.nn as nn
-from make_model import make_convnext_model
+from core.models.ConvNext.make_model import make_convnext_model
 
 
 class two_view_net(nn.Module):
