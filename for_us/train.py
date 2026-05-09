@@ -150,7 +150,9 @@ def train_model(model, loss_func, opt, dataloaders, dataset_sizes):
                 loss = cls_loss + loc_loss
                 loss.backward()
                 optimizer.step()
-        # scheduler.step() здесь не должно быть, перенести в конец эпохи
+            # scheduler.step() здесь не должно быть, перенести в конец эпохи
+
+            scheduler.step()
             # print("loss_backward_time:{}".format(time.time()-start_time))
 
             # statistics
@@ -183,7 +185,6 @@ def train_model(model, loss_func, opt, dataloaders, dataset_sizes):
                 iter_start = time.time()
 
         epoch_loss = running_loss / dataset_sizes['satellite']
-        scheduler.step()
         lr_backbone = optimizer.state_dict()['param_groups'][0]['lr']
 
         time_elapsed = time.time() - since
