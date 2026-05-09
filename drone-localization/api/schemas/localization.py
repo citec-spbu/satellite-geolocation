@@ -4,7 +4,8 @@ class LocalizationRequest(BaseModel):
     drone_image: str
 
 class LocalizationResponse(BaseModel):
-    drone_image: str
+    # СТРОГО по схеме:
+    drone_image: str         
     satellite_image: str
-    coordinates: dict
+    coordinates: dict        
     confidence: float
