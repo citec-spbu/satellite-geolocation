@@ -5,6 +5,9 @@ import io
 import json
 from typing import List, Dict, Tuple
 from dataclasses import dataclass
+from typing import Optional
+from core.utils.image import base64_to_tensor
+import torch
 
 import torch
 import torch.nn.functional as F
