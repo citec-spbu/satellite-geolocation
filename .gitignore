@@ -1,0 +1,31 @@
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+*.egg-info/
+dist/
+build/
+
+# Виртуальное окружение
+venv/
+env/
+.venv/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Данные и модели (тяжелые файлы)
+*.pth
+*.pt
+*.pkl
+*.npy
+*.mat
+
+# Датасеты (если есть локально)
+*.zip
+
+# Jupyter
+.ipynb_checkpoints/
