@@ -1,0 +1,78 @@
+import torch.nn as nn
+from .Backbone.backbone import make_backbone
+from .Neck.neck import make_neck
+from .Head.head import make_head
+from .PostProcess.postprocess import make_postprocess
+import torch
+
+
+class FPI(nn.Module):
+    def __init__(self, opt,device):
+        super(FPI, self).__init__()
+        self.device=device
+        self.opt = opt
+        # backbone init
+        self.backbone_name = opt.model["backbone"]["type"]
+        if self.backbone_name == "MixFormer":
+            opt.model["backbone"]["satellite_size"] = opt.data_config["Satellitehw"][0]
+            opt.model["backbone"]["uav_size"] = opt.data_config["UAVhw"][0]
+            self.union_backbone = make_backbone(opt)
+            opt.backbone_output_channel = self.union_backbone.backbone_out_channel
+        else:
+            self.backbone_uav = make_backbone(opt, opt.data_config["UAVhw"])
+            share = opt.model["backbone"].get("share", False)
+            if share:
+                self.backbone_satellite = self.backbone_uav
+            else:
+                self.backbone_satellite = make_backbone(opt, opt.data_config["Satellitehw"])
+            opt.backbone_output_channel = self.backbone_uav.backbone_out_channel
+
+        # neck init
+        self.neck_uav = make_neck(opt)
+        self.neck_satellite = make_neck(opt)
+        self.UAV_output_index = opt.model["neck"]["UAV_output_index"]
+        self.Satellite_output_index = opt.model["neck"]["Satellite_ouput_index"]
+
+        # head init
+        opt.model["head"]["muti_level_nums"] = len(opt.model["neck"]["UAV_output_index"])
+        self.head = make_head(opt)
+
+        # upsample init
+        self.upsample_to_original = opt.model["postprocess"]["upsample_to_original"]
+        if self.upsample_to_original:
+            self.postprocess = make_postprocess(opt)
+
+    def forward(self, z, x):
+        # backbone forward
+        if self.backbone_name == "MixFormer":
+            z, x = self.union_backbone(x, z)
+        else:
+            z = self.backbone_uav(z)
+            x = self.backbone_satellite(x)
+        # neck forward
+        neck_z = self.neck_uav(z)
+        neck_z = [neck_z[index] for index in self.UAV_output_index]
+        neck_x = self.neck_satellite(x)[self.Satellite_output_index]
+        # head forward
+        cls_out, reg_out = self.head(neck_z, neck_x)
+        # postprocess forward
+        if self.upsample_to_original:
+            cls_out,reg_out = self.postprocess(cls_out,reg_out)
+
+        return cls_out, reg_out
+
+    def load_checkpoint(self, checkpoint_path=""):
+        model_keys = set(self.state_dict().keys())
+        ckpt = torch.load(checkpoint_path, map_location="cuda")
+        self.backbone_uav.load_checkpoints(checkpoint_path=checkpoint_path)
+        self.backbone_satellite.load_checkpoints(checkpoint_path=checkpoint_path)
+        missing, unexpected = self.load_state_dict(ckpt, strict=False)
+
+
+def make_model(opt,device):
+    # init the FPI model
+    model = FPI(opt,device=device)
+    # if 'load_from' is not empty, load the pretrain checkpoint.
+    if isinstance(opt.load_from, str) and len(opt.load_from) > 0:
+        model.load_checkpoint(checkpoint_path=opt.load_from)
+    return model
