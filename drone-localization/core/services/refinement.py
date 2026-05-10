@@ -1,9 +1,8 @@
 from typing import Tuple
-from matplotlib import transforms
+from torchvision import transforms
 import torch
-from DRL.train import create_hanning_mask
-import utils.taskflow as taskflow
-from utils.configuration_file import config
+from .utils_for_refinement.taskflow import  FPI
+from .utils_for_refinement.configuration_file import config
 from PIL import Image
 import base64
 from io import BytesIO
@@ -18,8 +17,8 @@ class RefinementService:
     def load_model(self):
         """Загружает модель regressor"""
         if self.model is None:
-            model_keys = set(model.state_dict().keys())
-            model = taskflow.FPI(self.opt, device=self.device)
+            self.model = FPI(self.opt, device=self.device)
+            model_keys = set(self.model.state_dict().keys())
             ckpt = torch.load(self.model_path, map_location=self.device)
             new_state_dict = {}
             for k, v in ckpt.items():
@@ -27,7 +26,7 @@ class RefinementService:
                     new_state_dict[k] = v
                 elif "backbone_uav.backbone." + k in model_keys:
                     new_state_dict["backbone_uav.backbone." + k] = v
-            missing, unexpected = model.load_state_dict(new_state_dict, strict=True)
+            missing, unexpected = self.model.load_state_dict(new_state_dict, strict=True)
             print(f"✅ Refinement model loaded on {self.device} with {len(missing)} missing and {len(unexpected)} unexpected keys") #для отладки
     def _get_transformer(self):
         transform_uav_list = [
@@ -62,33 +61,32 @@ class RefinementService:
         Returns:
             Tuple (x, y) - уточненные координаты на изображении спутника
         """
-        transforms = self._get_transformer()
+        transformation = self._get_transformer()
         if self.model is None:
             self.load_model()
         # 2. Декодирование строки в бинарные данные
         image_data = base64.b64decode(drone_image_b64)
         image_stream = BytesIO(image_data)
         with Image.open(image_stream) as img:
-            x = transforms['UAV'](img).unsqueeze(0).to(self.device)
+            x = transformation['UAV'](img).unsqueeze(0).to(self.device)
         image_data = base64.b64decode(satellite_image_b64)
         image_stream = BytesIO(image_data)
         with Image.open(image_stream) as img:
-            z = transforms['satellite'](img).unsqueeze(0).to(self.device)
+            z = transformation['satellite'](img).unsqueeze(0).to(self.device)
             height=img.height
             width=img.width
         self.model.eval()
         with torch.no_grad():
-            cls_out, reg_out = self.model(z, x) #используем только сls reg пустой
+            cls_out, reg_out = self.model(x, z) #используем только сls reg пустой
         normalized = torch.sigmoid(torch.tensor(cls_out[0])).squeeze().detach().numpy()
-        kernel = create_hanning_mask(self.opt.test_config["center_R"])
+        kernel = self.create_hanning_mask(self.opt.test_config["filterR"])
         map = cv2.filter2D(normalized, -1, kernel)
         pos = np.argmax(map)
         coords = np.unravel_index(pos, map.shape)
         x_original = (coords[0] / 576) * height
         y_original = (coords[1] / 576) * width
         return x_original, y_original
-    
-    @classmethod
+    @staticmethod
     def create_hanning_mask(center_R):
         hann_window = np.outer(  # np.outer 如果a，b是高维数组，函数会自动将其flatten成1维 ，用来求外积
             np.hanning(center_R+2),
