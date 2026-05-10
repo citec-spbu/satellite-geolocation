@@ -27,6 +27,7 @@ class RefinementService:
                 elif "backbone_uav.backbone." + k in model_keys:
                     new_state_dict["backbone_uav.backbone." + k] = v
             missing, unexpected = self.model.load_state_dict(new_state_dict, strict=True)
+            self.model.to(self.device)
             print(f"✅ Refinement model loaded on {self.device} with {len(missing)} missing and {len(unexpected)} unexpected keys") #для отладки
     def _get_transformer(self):
         transform_uav_list = [
