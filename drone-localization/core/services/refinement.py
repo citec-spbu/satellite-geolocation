@@ -8,12 +8,18 @@ import base64
 from io import BytesIO
 import numpy as np
 import cv2
+from pathlib import Path
 class RefinementService:
-    def __init__(self, model_path: str = "models/refinement.pt", config_path: str = "services/config_with_attention_head.json"):
+    def __init__(self, model_path: str = "models/refinement.pt", config_path: str = "config_with_attention_head.json"):
         self.model_path = model_path
         self.model = None
         self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-        self.opt = config(config_path)
+        # Разрешаем путь к конфигурации относительно текущего файла
+        
+        # Если что это данил добавил, у меня на компе почему то не хотел находить в том виде как у тебя было написано
+        # изза этого сервак не запускался
+        config_path = Path(__file__).parent / config_path
+        self.opt = config(str(config_path))
     def load_model(self):
         """Загружает модель regressor"""
         if self.model is None:
