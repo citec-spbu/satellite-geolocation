@@ -26,6 +26,10 @@ env/
 
 # Датасеты (если есть локально)
 *.zip
+uav_dataset/
 
 # Jupyter
-.ipynb_checkpoints/
+.ipynb_checkpoints/# pixi environments
+.pixi/*
+!.pixi/config.toml
+

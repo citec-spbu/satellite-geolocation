@@ -6,7 +6,7 @@ import json
 from typing import List, Dict, Tuple
 from dataclasses import dataclass
 from typing import Optional
-from core.utils.image import base64_to_tensor
+from ..utils.image import base64_to_tensor
 import torch
 
 import torch
@@ -16,8 +16,8 @@ from PIL import Image
 from torchvision import transforms
 from torchvision.transforms import InterpolationMode
 
-from utils import load_network
-from core.models.ConvNext import two_view_net
+from ...utils import load_network
+from ..models.ConvNext import two_view_net
 
 
 @dataclass

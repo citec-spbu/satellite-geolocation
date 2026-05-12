@@ -1,6 +1,6 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware  # ✅ Добавили CORS
-from api.endpoints.localize import router as localize_router
+from .api.endpoints.localize import router as localize_router
 
 app = FastAPI(
     title="Satellite Geolocation API",
