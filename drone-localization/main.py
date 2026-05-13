@@ -1,11 +1,18 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware  # ✅ Добавили CORS
 from api.endpoints.localize import router as localize_router
+import logging
 
 app = FastAPI(
     title="Satellite Geolocation API",
     description="API for drone localization using satellite imagery",
     version="0.1.0"
+)
+
+logging.basicConfig(
+    level = logging.INFO,
+    format = "%(asctime)s [%(levelname)s] %(name)s: %(message)s",
+    datefmt="%Y-%m-%d %H:%M:%S"
 )
 
 # ✅ CORS для Streamlit (порт 8501)

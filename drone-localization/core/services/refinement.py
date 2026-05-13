@@ -1,3 +1,4 @@
+import logging
 from typing import Tuple
 from torchvision import transforms
 import torch
@@ -9,6 +10,9 @@ from io import BytesIO
 import numpy as np
 import cv2
 from pathlib import Path
+
+logger = logging.getLogger(__name__)
+
 class RefinementService:
     def __init__(self, model_path: str = "models/refinement.pt", config_path: str = "config_with_attention_head.json"):
         self.model_path = model_path
@@ -34,7 +38,7 @@ class RefinementService:
                     new_state_dict["backbone_uav.backbone." + k] = v
             missing, unexpected = self.model.load_state_dict(new_state_dict, strict=True)
             self.model.to(self.device)
-            print(f"✅ Refinement model loaded on {self.device} with {len(missing)} missing and {len(unexpected)} unexpected keys") #для отладки
+            logger.info(f"✅ Refinement model loaded on {self.device} with {len(missing)} missing and {len(unexpected)} unexpected keys") #для отладки
     def _get_transformer(self):
         transform_uav_list = [
             transforms.Resize(self.opt.data_config["UAVhw"], interpolation=3),

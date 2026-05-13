@@ -3,6 +3,7 @@ import sys
 import base64
 import io
 import json
+import logging
 from typing import List, Dict, Tuple
 from dataclasses import dataclass
 from typing import Optional
@@ -19,6 +20,7 @@ from torchvision.transforms import InterpolationMode
 from ..utils.utils_for_retrieval import load_network
 from ..models.ConvNext import two_view_net
 
+logger = logging.getLogger(__name__)
 
 @dataclass
 class RetrievalResult:
@@ -61,20 +63,20 @@ class RetrievalService:
         self.gallery_embeddings = None
         self.gallery_paths = None
         
-        print(f"RetrievalService initialized:")
-        print(f"  Model: {model_name}")
-        print(f"  Weights: {self.weights_dir}")
-        print(f"  Gallery: {self.gallery_dir}")
-        print(f"  Dataset: {self.dataset_path}")
-        print(f"  Device: {self.device}")
+        logger.info(f"RetrievalService initialized:")
+        logger.info(f"  Model: {model_name}")
+        logger.info(f"  Weights: {self.weights_dir}")
+        logger.info(f"  Gallery: {self.gallery_dir}")
+        logger.info(f"  Dataset: {self.dataset_path}")
+        logger.info(f"  Device: {self.device}")
     
     def load_model(self):
         """Загрузка модели из весов"""
         if self.model is not None:
-            print("Model already loaded")
+            logger.info("Model already loaded")
             return
         
-        print("Loading model...")
+        logger.info("Loading model...")
         
         # Создаем конфиг для загрузки
         class Opt:
@@ -112,7 +114,7 @@ class RetrievalService:
             transforms.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225])
         ])
             
-        print(f"Model loaded (epoch {epoch})")
+        logger.info(f"Model loaded (epoch {epoch})")
     
     def load_or_build_gallery(self, num_buildings: int = 40):
         """Загрузка галереи из кэша или построение новой"""
@@ -125,19 +127,19 @@ class RetrievalService:
         paths_cache = os.path.join(self.gallery_dir, "paths.json")
         
         if os.path.exists(embeddings_cache) and os.path.exists(paths_cache):
-            print("Loading gallery from cache...")
+            logger.info("Loading gallery from cache...")
             self.gallery_embeddings = np.load(embeddings_cache)
             with open(paths_cache, 'r') as f:
                 self.gallery_paths = json.load(f)
-            print(f"Gallery loaded: {len(self.gallery_embeddings)} embeddings")
+            logger.info(f"Gallery loaded: {len(self.gallery_embeddings)} embeddings")
         else:
-            print(f"Building gallery from first {num_buildings} buildings...")
+            logger.info(f"Building gallery from first {num_buildings} buildings...")
             self.gallery_embeddings, self.gallery_paths = self._build_gallery(num_buildings)
             
             np.save(embeddings_cache, self.gallery_embeddings)
             with open(paths_cache, 'w') as f:
                 json.dump(self.gallery_paths, f)
-            print("Gallery cached")
+            logger.info("Gallery cached")
     
     def find_match(self, drone_image_b64: str) -> RetrievalResult:
         """
@@ -274,7 +276,7 @@ class RetrievalService:
         # Получаем список зданий и берем первые num_buildings
         location_ids = sorted(os.listdir(satellite_dir))[:num_buildings]
         
-        print(f"Processing {len(location_ids)} buildings...")
+        logger.info(f"Processing {len(location_ids)} buildings...")
         
         for location_id in location_ids:
             location_path = os.path.join(satellite_dir, location_id)
@@ -298,9 +300,9 @@ class RetrievalService:
                     embeddings_list.append(embedding)
                     paths_list.append(img_path)
                 except Exception as e:
-                    print(f"  Warning: Failed to process {img_path}: {e}")
+                    logger.info(f"  Warning: Failed to process {img_path}: {e}")
         
         gallery_embeddings = np.stack(embeddings_list)
-        print(f"Gallery built: {len(gallery_embeddings)} embeddings from {len(location_ids)} buildings")
+        logger.info(f"Gallery built: {len(gallery_embeddings)} embeddings from {len(location_ids)} buildings")
         
         return gallery_embeddings, paths_list

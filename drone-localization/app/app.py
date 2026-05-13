@@ -23,7 +23,6 @@ if uploaded:
             
             if res.status_code == 200:
                 data = res.json()
-                print(data['satellite_image'])
                 # Показываем найденный спутник
                 sat_bytes = base64.b64decode(data["satellite_image"])
                 st.image(Image.open(io.BytesIO(sat_bytes)), caption="Найденный спутник")
