@@ -1,7 +1,7 @@
 import os
 import torch
 import yaml
-from .core.models.ConvNext import two_view_net
+from ..models.ConvNext import two_view_net
 
 
 def get_model_list(dirname, key):

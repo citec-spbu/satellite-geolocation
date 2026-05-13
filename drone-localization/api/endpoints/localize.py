@@ -1,7 +1,7 @@
 from fastapi import APIRouter, HTTPException
 from ..schemas.localization import LocalizationRequest, LocalizationResponse
-from ...core.services.retrieval import RetrievalService
-from ...core.services.refinement import RefinementService
+from core.services.retrieval import RetrievalService
+from core.services.refinement import RefinementService
 
 router = APIRouter()
 

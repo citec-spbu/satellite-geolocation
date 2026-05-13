@@ -16,7 +16,7 @@ from PIL import Image
 from torchvision import transforms
 from torchvision.transforms import InterpolationMode
 
-from ...utils import load_network
+from ..utils.utils_for_retrieval import load_network
 from ..models.ConvNext import two_view_net
 
 
