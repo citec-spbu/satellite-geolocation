@@ -6,11 +6,11 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
-    container_name: satellite-geoloc-api
+    container_name: drone_localization_api
     ports:
       - "8000:8000"
     volumes:
-      - ./drone-localization:/app/drone-localization
+      - ./drone_localization:/app/drone_localization
     restart: unless-stopped
     command: pixi run dev-api
 
@@ -19,11 +19,11 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
-    container_name: satellite-geoloc-ui
+    container_name: drone_localization_ui
     ports:
       - "8501:8501"
     volumes:
-      - ./drone-localization:/app/drone-localization
+      - ./drone_localization:/app/drone_localization
     depends_on:
       - api  # ← запустить api перед ui
     environment:
