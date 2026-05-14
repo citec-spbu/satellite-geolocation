@@ -1,0 +1,32 @@
+version: '3.8'
+
+services:
+  # FastAPI Backend
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: satellite-geoloc-api
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./drone-localization:/app/drone-localization
+    restart: unless-stopped
+    command: pixi run dev-api
+
+  # Streamlit Frontend
+  ui:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: satellite-geoloc-ui
+    ports:
+      - "8501:8501"
+    volumes:
+      - ./drone-localization:/app/drone-localization
+    depends_on:
+      - api  # ← запустить api перед ui
+    environment:
+      - API_URL=http://api:8000
+    restart: unless-stopped
+    command: pixi run dev-ui  # ← запустить UI команду
