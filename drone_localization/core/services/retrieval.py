@@ -49,6 +49,7 @@ class RetrievalService:
         # Пути
         current_dir = os.path.dirname(os.path.realpath(__file__))
         project_root = os.path.dirname(os.path.dirname(os.path.dirname(current_dir)))
+        self.weights_dir = os.path.join(project_root, "weights")
         self.gallery_dir = os.path.join(project_root, "drone_localization/core/services/gallery")
         self.dataset_path = dataset_path
 

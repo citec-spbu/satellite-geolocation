@@ -21,7 +21,7 @@ env/
 *.pth
 *.pt
 *.pkl
-*.npy
+# *.npy
 *.mat
 
 # Датасеты (если есть локально)
@@ -30,6 +30,6 @@ data/
 
 # Jupyter
 .ipynb_checkpoints/# pixi environments
+
 .pixi/*
 !.pixi/config.toml
-

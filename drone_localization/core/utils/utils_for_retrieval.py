@@ -2,14 +2,16 @@ import os
 
 import torch
 import yaml
+import logging
 
 from ..models.ConvNext import two_view_net
 
+logger = logging.getLogger(__name__)
 
 def get_model_list(dirname, key):
     """Получение последнего файла модели"""
     if not os.path.exists(dirname):
-        print("No dir: %s" % dirname)
+        logger.info("No dir: %s" % dirname)
         return None
 
     gen_models = [
@@ -25,17 +27,13 @@ def get_model_list(dirname, key):
     return gen_models[-1]
 
 
-def load_network(name, opt, dirname="./data/convnext_tri/weights/"):
+def load_network(name, opt, dirname):
     """Загрузка обученной сети"""
-
-    # Находим последнюю сохраненную модель
-    last_model_name = os.path.basename(get_model_list(dirname, "net"))
-    if last_model_name is None:
-        raise FileNotFoundError(f"No .pth files found in {dirname}")
-
-    epoch = last_model_name.split("_")[1].split(".")[0]
-    if epoch != "last":
-        epoch = int(epoch)
+    current_dir = os.path.dirname(os.path.realpath(__file__))
+    project_root = os.path.dirname(os.path.dirname(os.path.dirname(current_dir)))
+    dirname = os.path.join(project_root, "weights")
+    # Находим сохраненную модель
+    last_model_name = "net_152.pth"
 
     # Загружаем конфигурацию
     config_path = os.path.join(dirname, "opts.yaml")
@@ -56,15 +54,14 @@ def load_network(name, opt, dirname="./data/convnext_tri/weights/"):
         raise ValueError(f"Unknown views: {opt.views}")
 
     # Загружаем веса
-    if isinstance(epoch, int):
-        save_filename = "net_%03d.pth" % epoch
-    else:
-        save_filename = "net_%s.pth" % epoch
-
-    save_path = os.path.join(dirname, save_filename)
-    print("Loading model from %s" % save_path)
+    save_path = os.path.join(dirname, last_model_name)
+    
+    if not os.path.exists(save_path):
+        raise FileNotFoundError(f"Model not found: {save_path}")
+    
+    logger.info("Loading model from %s" % save_path)
 
     state_dict = torch.load(save_path, map_location="cpu")
     model.load_state_dict(state_dict, strict=False)
 
-    return model, opt, epoch
+    return model, opt, None 
