@@ -32,15 +32,12 @@ class RetrievalService:
 
     def __init__(
         self,
-        model_name: str = "convnext_tri",
-        data_dir: str = "data",  # ← просто "data", на одном уровне с core/
         dataset_path: str = "/content/SUES-200-512x512",
         device: str = "cuda" if torch.cuda.is_available() else "cpu",
         image_size: Tuple[int, int] = (256, 256),
     ):
         """
         Args:
-            model_name: имя модели (подпапка в data/)
             data_dir: путь к папке с данными моделей
             dataset_path: путь к датасету
             device: устройство для инференса
@@ -50,9 +47,9 @@ class RetrievalService:
         self.image_size = image_size
 
         # Пути
-        model_dir = os.path.join(data_dir, model_name)
-        self.weights_dir = os.path.join(model_dir, "weights")
-        self.gallery_dir = os.path.join(model_dir, "gallery")
+        current_dir = os.path.dirname(os.path.realpath(__file__))
+        project_root = os.path.dirname(os.path.dirname(os.path.dirname(current_dir)))
+        self.gallery_dir = os.path.join(project_root, "drone_localization/core/services/gallery")
         self.dataset_path = dataset_path
 
         # Загружаемые компоненты
@@ -62,7 +59,6 @@ class RetrievalService:
         self.gallery_paths = None
 
         logger.info(f"RetrievalService initialized:")
-        logger.info(f"  Model: {model_name}")
         logger.info(f"  Weights: {self.weights_dir}")
         logger.info(f"  Gallery: {self.gallery_dir}")
         logger.info(f"  Dataset: {self.dataset_path}")
