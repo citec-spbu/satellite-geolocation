@@ -1,8 +1,6 @@
 from torch import nn
 from torch.nn import functional as F
 
-from .utils import ChannelPool
-
 
 class ChannelEmbedding(nn.Module):
     def __init__(self, input_ndim, mid_process_channels, **kwargs):

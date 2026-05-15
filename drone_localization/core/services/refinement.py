@@ -1,6 +1,4 @@
-import base64
 import logging
-from io import BytesIO
 from pathlib import Path
 from typing import Tuple
 
@@ -22,7 +20,7 @@ class RefinementService:
     def __init__(
         self,
         model_path: str = "models/refinement.pt",
-        config_path: str = "config_with_attention_head.json",
+        config_path: str = "models/new_example_config.json",
     ):
         self.model_path = model_path
         self.model = None
@@ -72,14 +70,14 @@ class RefinementService:
         return data_transforms
 
     def calculate_position(
-        self, drone_image_b64: str, satellite_image_b64: str
+        self, drone_image: Image, satellite_image: Image
     ) -> Tuple[float, float]:
         """
         Уточняет координаты по паре изображений
 
         Args:
-            drone_image_b64: Base64 drone image
-            satellite_image_b64: Base64 satellite image
+            drone_image: PIL Image object for drone image
+            satellite_image: PIL Image object for satellite image
 
         Returns:
             Tuple (x, y) - уточненные координаты на изображении спутника
@@ -88,20 +86,16 @@ class RefinementService:
         if self.model is None:
             self.load_model()
         # 2. Декодирование строки в бинарные данные
-        image_data = base64.b64decode(drone_image_b64)
-        image_stream = BytesIO(image_data)
-        with Image.open(image_stream) as img:
+        with Image.open(drone_image) as img:
             x = transformation["UAV"](img).unsqueeze(0).to(self.device)
-        image_data = base64.b64decode(satellite_image_b64)
-        image_stream = BytesIO(image_data)
-        with Image.open(image_stream) as img:
+        with Image.open(satellite_image) as img:
             z = transformation["satellite"](img).unsqueeze(0).to(self.device)
             height = img.height
             width = img.width
         self.model.eval()
         with torch.no_grad():
             cls_out, reg_out = self.model(x, z)  # используем только сls reg пустой
-        normalized = torch.sigmoid(torch.tensor(cls_out[0])).squeeze().detach().numpy()
+        normalized = torch.sigmoid(cls_out[0]).squeeze().detach().cpu().numpy()
         kernel = self.create_hanning_mask(self.opt.test_config["filterR"])
         map = cv2.filter2D(normalized, -1, kernel)
         pos = np.argmax(map)

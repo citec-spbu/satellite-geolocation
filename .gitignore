@@ -27,7 +27,6 @@ env/
 # Датасеты (если есть локально)
 *.zip
 data/
-weights
 
 # Jupyter
 .ipynb_checkpoints/# pixi environments

@@ -1,8 +1,6 @@
 from torch import nn
 
 from .mixformer_cvt import get_mixformer_cvt
-from .mixformer_pvt import get_mixformer_pvt
-from .mixformer_vit import get_mixformer_vit
 
 
 class MixFormer(nn.Module):
@@ -17,22 +15,12 @@ class MixFormer(nn.Module):
     ):
         """Initializes the model."""
         super().__init__()
-        if "patch" in vit_type:
-            self.backbone, self.embed_dim = get_mixformer_vit(
-                vit_type=vit_type,
-                satellite_size=satellite_size,
-                uav_size=uav_size,
-                pretrain_path=pretrain_path,
-                pretrain=pretrain,
-            )
-        elif "cvt" in vit_type:
+        if "cvt" in vit_type:
             self.backbone, self.embed_dim = get_mixformer_cvt(
                 vit_type, pretrain_path=pretrain_path, pretrain=pretrain
             )
-        elif "PvT" in vit_type:
-            self.backbone, self.embed_dim = get_mixformer_pvt(
-                vit_type, pretrain_path=pretrain_path, pretrain=pretrain
-            )
+        else:
+            raise NotImplementedError("Backbone type {} is not implemented.".format(vit_type))
 
     def forward(self, template, search):
         # search: (b, c, h, w)

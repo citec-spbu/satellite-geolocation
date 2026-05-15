@@ -1,27 +1,22 @@
 {
   "model": {
     "backbone": {
-      "type": "ViT-S",
-      "pretrain": false,
-      "output_index": [0]
+      "type": "MixFormer",
+      "vit_type": "cvt13",
+      "pretrain_path": "",
+      "pretrain": true,
+      "output_index": [0, 1, 2]
     },
     "neck": {
-      "type": "CCN",
+      "type": "FPN_I3",
       "output_dims": 128,
       "UAV_output_index": [0],
       "Satellite_ouput_index": 0
     },
     "head": {
-        "type":"AttentionFusionLib",
-        "fusion_type": "CAT_SA",
-        "head_pool":"linear",
-        "dropout_rate": 0.1,
-        "input_ndim": 128,
-        "mid_ndim": 256,
-        "attention_layer_num":4,
-        "linear_layer_num": 1,
-        "enable_position_embedding": true,
-        "pos_lenght": [128,383]
+      "type":"ChannelEmbedding", 
+      "input_ndim": 128, 
+      "mid_process_channels":[64, 16, 1]
 
     },
     "postprocess": {
@@ -50,8 +45,8 @@
     "val_dir": "map2019/val",
     "test_dir": "map2019/train",
     "test_mode": "merge_test_700-1800_cr0.95_stride100",
-    "UAVhw": [128, 128],
-    "Satellitehw": [384, 384]
+    "UAVhw": [192, 192],
+    "Satellitehw": [576, 576]
   },
   "pipline_config": {
     "train_pipeline": {
@@ -60,7 +55,7 @@
           "probability": 0.3
         },
         "RandomResize": {
-          "img_size": [128, 128]
+          "img_size": [192, 192]
         },
         "ToTensor": {}
       },
@@ -70,21 +65,21 @@
           "map_size": [512, 1000]
         },
         "RandomResize": {
-          "img_size": [384, 384]
+          "img_size": [576, 576]
         },
         "ToTensor": {}
       }
     }
   },
   "lr_config": {
-    "lr": 0.00005,
+    "lr": 0.00015,
     "type": "cosine",
     "warmup_iters": 500,
     "warmup_ratio": 0.01
   },
   "train_config": {
     "autocast": true,
-    "num_epochs": 30
+    "num_epochs": 50
   },
   "test_config": {
     "num_worker": 16,
@@ -96,5 +91,5 @@
     "epoch_start_save": 0,
     "only_save_best": false
   },
-  "download_from": ""
+  "download_from": "checkpoints/CvT-13-384x384-IN-22k.pth"
 }

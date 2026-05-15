@@ -1,16 +1,9 @@
 import os
-
-import timm
 import torch
 import torch.nn as nn
 
 from ..utils import vector2array
-from .convnext import convnext_small, convnext_tiny
-from .cvt import get_cvt_models
 from .mixformer import MixFormer
-from .pcpvt import pcpvt_small
-from .pvt import pvt_small, pvt_tiny
-from .pvtv2 import pvt_v2_b2
 
 
 def make_backbone(opt, img_size=None):
@@ -33,59 +26,9 @@ class Backbone(nn.Module):
     def init_backbone(self, img_size):
         backbone = self.backbone_type
         pretrain = self.pretrain
-        if backbone == "ResNet50":
-            backbone_model = timm.create_model(
-                "resnet50", pretrained=pretrain, features_only=True
-            )
-            backbone_out_channel = [128, 256, 512, 1024, 2048]
-        elif backbone == "ViT-S":
-            backbone_model = timm.create_model(
-                "vit_small_patch16_224", pretrained=pretrain, img_size=img_size
-            )
-            backbone_out_channel = [384]
-        elif backbone == "ViT-B":
-            backbone_model = timm.create_model(
-                "vit_base_patch16_224", pretrained=pretrain, img_size=img_size
-            )
-            backbone_out_channel = [768]
-        elif backbone == "DeiT-S":
-            backbone_model = timm.create_model(
-                "deit_small_patch16_224", pretrained=pretrain, img_size=img_size
-            )
-            backbone_out_channel = [384]
-        elif backbone == "PvT-T":
-            backbone_model = pvt_tiny(pretrained=pretrain)
-            backbone_out_channel = [64, 128, 320, 512]
-        elif backbone == "PvT-S":
-            backbone_model = pvt_small(pretrained=pretrain)
-            backbone_out_channel = [64, 128, 320, 512]
-        elif backbone == "PcPvT-S":
-            backbone_model = pcpvt_small(pretrained=pretrain)
-            backbone_out_channel = [64, 128, 320, 512]
-        elif backbone == "PvTv2-b2":
-            # TODO Not completely fitted
-            backbone_model = pvt_v2_b2(pretrained=pretrain)
-            # backbone_model = timm.create_model(
-            #     "pvt_v2_b2", pretrained=pretrain, img_size=img_size)
-            backbone_out_channel = [64, 128, 320, 512]
-        elif backbone == "ConvneXt-T":
-            backbone_model = convnext_tiny(pretrained=pretrain)
-            backbone_out_channel = [96, 192, 384, 768]
-        elif backbone == "ConvneXt-S":
-            backbone_model = convnext_small(pretrained=pretrain)
-            backbone_out_channel = [96, 192, 384, 768]
-        elif backbone == "EfficientNet-B5":
-            backbone_model = timm.create_model(
-                "tf_efficientnet_b5", features_only=True, pretrained=pretrain
-            )
-            backbone_out_channel = [24, 40, 64, 176, 512]
-        elif backbone == "MixFormer":
+        if backbone == "MixFormer":
             backbone_model = MixFormer(**self.opt.model["backbone"])
             backbone_out_channel = backbone_model.embed_dim
-        elif backbone == "CvT":
-            backbone_model, backbone_out_channel = get_cvt_models(
-                **self.opt.model["backbone"]
-            )
         else:
             raise NameError("{} not in the backbone list!!!".format(backbone))
         return backbone_model, [backbone_out_channel[ind] for ind in self.output_index]
