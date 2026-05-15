@@ -22,7 +22,7 @@ class RefinementService:
     def __init__(
         self,
         model_path: str = "models/refinement.pt",
-        config_path: str = "config_with_attention_head.json",
+        config_path: str = "models/new_example_config.json",
     ):
         self.model_path = model_path
         self.model = None
