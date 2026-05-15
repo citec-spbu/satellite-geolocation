@@ -1,3 +1,4 @@
+import os
 import base64
 import io
 
@@ -5,7 +6,7 @@ import requests
 import streamlit as st
 from PIL import Image
 
-API_URL = "http://localhost:8000/api/localize"
+API_URL = os.getenv("API_URL", "http://localhost:8000")
 
 st.title("🛰️ Satellite Geolocation")
 uploaded = st.file_uploader("Загрузи фото с дрона", type=["jpg", "png"])
@@ -20,7 +21,7 @@ if uploaded:
             img_b64 = base64.b64encode(img_bytes).decode("utf-8")
 
             # Запрос к API
-            res = requests.post(API_URL, json={"drone_image": img_b64})
+            res = requests.post(f"{API_URL}/api/localize", json={"drone_image": img_b64})
 
             if res.status_code == 200:
                 data = res.json()

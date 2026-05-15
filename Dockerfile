@@ -36,7 +36,7 @@ COPY drone_localization ./drone_localization
 RUN pixi install
 
 # Expose API port
-EXPOSE 8000
+EXPOSE 8000 8051
 
 # Healthcheck
 HEALTHCHECK --interval=30s --timeout=10s --start-period=10s --retries=3 \
