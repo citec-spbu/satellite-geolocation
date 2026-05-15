@@ -19,17 +19,17 @@ logger = logging.getLogger(__name__)
 class RefinementService:
     def __init__(
         self,
-        model_path: str = "models/refinement.pt",
+        model_path: str = "weights/net_best_refinement.pth",
         config_path: str = "models/new_example_config.json",
     ):
         self.model_path = model_path
         self.model = None
         self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
         # Разрешаем путь к конфигурации относительно текущего файла
-
+        self.model_path = Path(__file__).parents[3] / model_path
         # Если что это данил добавил, у меня на компе почему то не хотел находить в том виде как у тебя было написано
         # изза этого сервак не запускался
-        config_path = Path(__file__).parent / config_path
+        config_path = Path(__file__).parents[1] / config_path
         self.opt = config(str(config_path))
 
     def load_model(self):
