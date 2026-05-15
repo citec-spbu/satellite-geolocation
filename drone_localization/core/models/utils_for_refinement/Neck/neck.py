@@ -1,9 +1,6 @@
-import timm
-import torch
 import torch.nn as nn
 from torch.nn import functional as F
 
-from .channel_convert import CCN
 from .fpn import FPN_I3, FPN_I4
 
 
@@ -26,8 +23,6 @@ class Neck(nn.Module):
             neck_model = FPN_I3(**opt_neck)
         elif neck == "FPN_I4":
             neck_model = FPN_I4(**opt_neck)
-        elif neck == "CCN":
-            neck_model = CCN(**opt_neck)
         elif neck == "None":
             neck_model = None
         else:

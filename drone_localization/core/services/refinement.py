@@ -1,6 +1,4 @@
-import base64
 import logging
-from io import BytesIO
 from pathlib import Path
 from typing import Tuple
 
@@ -97,7 +95,7 @@ class RefinementService:
         self.model.eval()
         with torch.no_grad():
             cls_out, reg_out = self.model(x, z)  # используем только сls reg пустой
-        normalized = torch.sigmoid(torch.tensor(cls_out[0])).squeeze().detach().numpy()
+        normalized = torch.sigmoid(cls_out[0]).squeeze().detach().numpy()
         kernel = self.create_hanning_mask(self.opt.test_config["filterR"])
         map = cv2.filter2D(normalized, -1, kernel)
         pos = np.argmax(map)
