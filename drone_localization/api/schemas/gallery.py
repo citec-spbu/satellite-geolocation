@@ -12,10 +12,10 @@ class Coordinates(BaseModel):
     E - долгота (East)
     N - широта (North)
     """
-    tl_E: float = Field(..., description="Долгота верхнего левого угла (longitude), диапазон [-180, 180]")
-    tl_N: float = Field(..., description="Широта верхнего левого угла (latitude), диапазон [-90, 90]")
-    br_E: float = Field(..., description="Долгота нижнего правого угла (longitude), диапазон [-180, 180]")
-    br_N: float = Field(..., description="Широта нижнего правого угла (latitude), диапазон [-90, 90]")
+    tl_E: float = Field(..., description="Долгота верхнего левого угла (longitude), диапазон [-180, 180]", ge=-180.0, le=180.0)
+    tl_N: float = Field(..., description="Широта верхнего левого угла (latitude), диапазон [-90, 90]", ge=-90.0, le=90.0)
+    br_E: float = Field(..., description="Долгота нижнего правого угла (longitude), диапазон [-180, 180]", ge=-180.0, le=180.0)
+    br_N: float = Field(..., description="Широта нижнего правого угла (latitude), диапазон [-90, 90]", ge=-90.0, le=90.0)
 
 
 class GalleryUploadRequest(BaseModel):
