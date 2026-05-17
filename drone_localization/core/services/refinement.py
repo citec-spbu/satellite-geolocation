@@ -70,7 +70,7 @@ class RefinementService:
         return data_transforms
 
     def calculate_position(
-        self, drone_image: Image, satellite_image: Image
+        self, drone_image: Image.Image, satellite_image: Image.Image
     ) -> Tuple[float, float]:
         """
         Уточняет координаты по паре изображений

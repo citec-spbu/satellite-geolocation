@@ -20,7 +20,9 @@ class MixFormer(nn.Module):
                 vit_type, pretrain_path=pretrain_path, pretrain=pretrain
             )
         else:
-            raise NotImplementedError("Backbone type {} is not implemented.".format(vit_type))
+            raise NotImplementedError(
+                "Backbone type {} is not implemented.".format(vit_type)
+            )
 
     def forward(self, template, search):
         # search: (b, c, h, w)

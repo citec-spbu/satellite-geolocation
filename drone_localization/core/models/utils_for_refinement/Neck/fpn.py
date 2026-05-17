@@ -1,7 +1,6 @@
 import torch.nn as nn
 
 
-
 class FPN_I4(nn.Module):
     def __init__(self, input_dims, output_dims=384, **kwargs):  # 384 1
         super(FPN_I4, self).__init__()
