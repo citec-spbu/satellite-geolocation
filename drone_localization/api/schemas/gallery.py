@@ -3,9 +3,19 @@ from typing import Optional, Dict, Any
 from pydantic import BaseModel, Field
 
 
+class Coordinates(BaseModel):
+    """Координаты в формате WGS84."""
+    lat: float = Field(..., description="Широта (latitude) в градусах, диапазон [-90, 90]")
+    lon: float = Field(..., description="Долгота (longitude) в градусах, диапазон [-180, 180]")
+
+
 class GalleryUploadRequest(BaseModel):
     """Запрос на загрузку спутникового изображения в галерею."""
     image: str = Field(..., description="Base64 кодированное изображение")
+    coordinates: Optional[Coordinates] = Field(
+        default=None,
+        description="Координаты места съемки (lat, lon)"
+    )
     metadata: Optional[Dict[str, Any]] = Field(
         default=None,
         description="Дополнительные метаданные (filename, location и т.д.)"
@@ -22,6 +32,7 @@ class GalleryImageResponse(BaseModel):
     """Ответ с изображением из галереи."""
     image_id: str
     image: str = Field(..., description="Base64 кодированное изображение")
+    coordinates: Optional[Coordinates] = None
     metadata: Optional[Dict[str, Any]] = None
 
 
@@ -36,6 +47,7 @@ class GallerySearchResult(BaseModel):
     image_id: str
     image: str = Field(..., description="Base64 кодированное изображение")
     score: float = Field(..., ge=0.0, le=1.0, description="Оценка сходства")
+    coordinates: Optional[Coordinates] = None
     metadata: Optional[Dict[str, Any]] = None
 
 
