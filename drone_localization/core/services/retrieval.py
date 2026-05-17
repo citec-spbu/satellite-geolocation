@@ -75,6 +75,7 @@ class RetrievalService:
             raise RuntimeError("Gallery is empty")
         best_id, best_score = hits[0]
         sat_img = self.gallery.get_image(best_id)
+        metadata = self.gallery_repo.get_metadata(best_id)
         return RetrievalResult(image=sat_img, score=best_score)
 
     def _find_top_k_pil(self, drone_img: Image.Image, top_k: int) -> List[RetrievalResult]:
@@ -83,7 +84,8 @@ class RetrievalService:
         results = []
         for img_id, score in hits:
             sat_img = self.gallery.get_image(img_id)
-            results.append(RetrievalResult(image=sat_img, score=score))
+            metadata = self.gallery_repo.get_metadata(img_id)
+            results.append(RetrievalResult(image=sat_img, score=score, metadata=metadata))
         return results
 
     # Вспомогательные методы для конвертации base64 <-> PIL

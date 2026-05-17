@@ -103,7 +103,7 @@ async def upload_image_file(
         # Парсим метаданные если есть
         parsed_metadata = {}
         if meta:
-            parsed_metadata = json.loads(metadata)
+            parsed_metadata = json.loads(meta)
 
         # Добавляем координаты если указаны
         if all(v is not None for v in [tl_E, tl_N, br_E, br_N]):
