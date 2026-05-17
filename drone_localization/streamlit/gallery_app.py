@@ -52,12 +52,18 @@ if page == "📤 Загрузить изображение":
         metadata_filename = st.text_input("Имя файла", "")
         metadata_location = st.text_input("Локация", "")
 
-        st.markdown("#### Координаты места съемки")
-        col_lat, col_lon = st.columns(2)
-        with col_lat:
-            lat = st.number_input("Широта (lat)", min_value=-90.0, max_value=90.0, value=None, step=0.000001)
-        with col_lon:
-            lon = st.number_input("Долгота (lon)", min_value=-180.0, max_value=180.0, value=None, step=0.000001)
+        st.markdown("#### Координаты прямоугольника (верхний левый и нижний правый углы)")
+        col_tl_E, col_tl_N = st.columns(2)
+        with col_tl_E:
+            tl_E = st.number_input("Долгота верхнего левого угла (tl_E)", min_value=-180.0, max_value=180.0, value=None, step=0.000001)
+        with col_tl_N:
+            tl_N = st.number_input("Широта верхнего левого угла (tl_N)", min_value=-90.0, max_value=90.0, value=None, step=0.000001)
+
+        col_br_E, col_br_N = st.columns(2)
+        with col_br_E:
+            br_E = st.number_input("Долгота нижнего правого угла (br_E)", min_value=-180.0, max_value=180.0, value=None, step=0.000001)
+        with col_br_N:
+            br_N = st.number_input("Широта нижнего правого угла (br_N)", min_value=-90.0, max_value=90.0, value=None, step=0.000001)
 
         metadata_custom = st.text_area("Дополнительные метаданные (JSON)", "{}")
 
@@ -82,8 +88,8 @@ if page == "📤 Загрузить изображение":
 
         # Добавляем координаты если указаны
         coordinates = None
-        if lat is not None and lon is not None:
-            coordinates = {"lat": lat, "lon": lon}
+        if all(v is not None for v in [tl_E, tl_N, br_E, br_N]):
+            coordinates = {"tl_E": tl_E, "tl_N": tl_N, "br_E": br_E, "br_N": br_N}
 
         if st.button("Загрузить в галерею", type="primary"):
             with st.spinner("Загрузка изображения..."):
@@ -95,8 +101,13 @@ if page == "📤 Загрузить изображение":
                     # Отправляем запрос с координатами в правильном формате
                     payload = {"image": img_b64}
                     if coordinates:
-                        # Формат coordinates должен быть объектом с lat и lon
-                        payload["coordinates"] = {"lat": coordinates["lat"], "lon": coordinates["lon"]}
+                        # Формат coordinates должен быть объектом с tl_E, tl_N, br_E, br_N
+                        payload["coordinates"] = {
+                            "tl_E": coordinates["tl_E"],
+                            "tl_N": coordinates["tl_N"],
+                            "br_E": coordinates["br_E"],
+                            "br_N": coordinates["br_N"]
+                        }
                     if metadata:
                         payload["metadata"] = metadata
 
@@ -120,8 +131,9 @@ if page == "📤 Загрузить изображение":
                             # Показываем координаты если есть
                             if img_data.get("coordinates"):
                                 coords = img_data["coordinates"]
-                                st.success(f"📍 Координаты: **{coords['lat']:.6f}**, **{coords['lon']:.6f}**")
-                                st.markdown(f"[Открыть в Google Maps](https://www.google.com/maps?q={coords['lat']},{coords['lon']})")
+                                st.success(f"📍 Координаты прямоугольника:")
+                                st.info(f"**Верхний левый угол:** {coords['tl_N']:.6f}, {coords['tl_E']:.6f}\n\n**Нижний правый угол:** {coords['br_N']:.6f}, {coords['br_E']:.6f}")
+                                st.markdown(f"[Открыть в Google Maps](https://www.google.com/maps?q={coords['tl_N']},{coords['tl_E']})")
 
                             if img_data.get("metadata"):
                                 st.json(img_data["metadata"])
@@ -182,8 +194,9 @@ elif page == "🔍 Поиск похожих":
                                     # Показываем координаты если есть
                                     if result.get("coordinates"):
                                         coords = result["coordinates"]
-                                        st.success(f"📍 Координаты: **{coords['lat']:.6f}**, **{coords['lon']:.6f}**")
-                                        st.markdown(f"[Открыть в Google Maps](https://www.google.com/maps?q={coords['lat']},{coords['lon']})")
+                                        st.success(f"📍 Координаты прямоугольника:")
+                                        st.info(f"**Верхний левый угол:** {coords['tl_N']:.6f}, {coords['tl_E']:.6f}\n\n**Нижний правый угол:** {coords['br_N']:.6f}, {coords['br_E']:.6f}")
+                                        st.markdown(f"[Открыть в Google Maps](https://www.google.com/maps?q={coords['tl_N']},{coords['tl_E']})")
 
                                     if result.get("metadata"):
                                         st.json(result["metadata"])

@@ -16,7 +16,7 @@ from drone_localization.api.schemas.gallery import (
     Coordinates,
     GallerySearchResult,
 )
-from drone_localization.api.utils.utils import base64_to_pil, pil_to_base64
+from drone_localization.api.utils.image import base64_to_pil, pil_to_base64
 from drone_localization.core.services.gallery import GalleryService
 from drone_localization.core.services.inference import InferenceService
 from drone_localization.infrastructure.gallery_repository_impl import GalleryRepositoryImpl
@@ -50,7 +50,12 @@ async def upload_image(request: GalleryUploadRequest):
         # Собираем метаданные с координатами
         full_metadata = request.metadata or {}
         if request.coordinates:
-            full_metadata["coordinates"] = {"lat": request.coordinates.lat, "lon": request.coordinates.lon}
+            full_metadata["coordinates"] = {
+                "tl_E": request.coordinates.tl_E,
+                "tl_N": request.coordinates.tl_N,
+                "br_E": request.coordinates.br_E,
+                "br_N": request.coordinates.br_N
+            }
 
         # Загружаем через сервис
         image_id = gallery_service.upload_image(pil_image, full_metadata)
@@ -67,9 +72,11 @@ async def upload_image(request: GalleryUploadRequest):
 @router.post("/upload-file", response_model=GalleryUploadResponse)
 async def upload_image_file(
     image: UploadFile = File(..., description="Файл изображения (JPEG/PNG)"),
-    lat: Optional[float] = Form(None, description="Широта (latitude) в градусах"),
-    lon: Optional[float] = Form(None, description="Долгота (longitude) в градусах"),
-    metadata: Optional[str] = Form(None, description="JSON метаданные")
+    tl_E: Optional[float] = Form(None, description="Долгота верхнего левого угла (longitude)"),
+    tl_N: Optional[float] = Form(None, description="Широта верхнего левого угла (latitude)"),
+    br_E: Optional[float] = Form(None, description="Долгота нижнего правого угла (longitude)"),
+    br_N: Optional[float] = Form(None, description="Широта нижнего правого угла (latitude)"),
+    meta: Optional[str] = Form(None, description="JSON метаданные")
 ):
     """
     Загрузить спутниковое изображение в галерею через file upload.
@@ -80,7 +87,7 @@ async def upload_image_file(
         image: Файл изображения
         lat: Широта места съемки
         lon: Долгота места съемки
-        metadata: JSON метаданные
+        meta JSON метаданные
     """
     import json
 
@@ -95,12 +102,17 @@ async def upload_image_file(
 
         # Парсим метаданные если есть
         parsed_metadata = {}
-        if metadata:
+        if meta:
             parsed_metadata = json.loads(metadata)
 
         # Добавляем координаты если указаны
-        if lat is not None and lon is not None:
-            parsed_metadata["coordinates"] = {"lat": lat, "lon": lon}
+        if all(v is not None for v in [tl_E, tl_N, br_E, br_N]):
+            parsed_metadata["coordinates"] = {
+                "tl_E": tl_E,
+                "tl_N": tl_N,
+                "br_E": br_E,
+                "br_N": br_N
+            }
 
         # Загружаем через сервис
         image_id = gallery_service.upload_image(pil_image, parsed_metadata)
@@ -143,7 +155,12 @@ async def get_image(image_id: str):
             payload = point[0].payload
             coordinates_raw = payload.get("coordinates")
             if coordinates_raw:
-                coordinates = Coordinates(lat=coordinates_raw["lat"], lon=coordinates_raw["lon"])
+                coordinates = Coordinates(
+                    tl_E=coordinates_raw["tl_E"],
+                    tl_N=coordinates_raw["tl_N"],
+                    br_E=coordinates_raw["br_E"],
+                    br_N=coordinates_raw["br_N"]
+                )
 
             # Копируем остальные метаданные кроме image_id и coordinates
             for key, value in payload.items():
@@ -206,7 +223,12 @@ async def search_similar(request: GallerySearchRequest):
                     payload = point[0].payload
                     coordinates_raw = payload.get("coordinates")
                     if coordinates_raw:
-                        coordinates = Coordinates(lat=coordinates_raw["lat"], lon=coordinates_raw["lon"])
+                        coordinates = Coordinates(
+                            tl_E=coordinates_raw["tl_E"],
+                            tl_N=coordinates_raw["tl_N"],
+                            br_E=coordinates_raw["br_E"],
+                            br_N=coordinates_raw["br_N"]
+                        )
 
                     # Копируем остальные метаданные
                     for key, value in payload.items():

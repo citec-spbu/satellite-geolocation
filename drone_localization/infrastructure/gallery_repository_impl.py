@@ -57,6 +57,19 @@ class GalleryRepositoryImpl(GalleryRepository):
     def get_image(self, image_id: str) -> Image.Image:
         response = self.minio.get_object(self.bucket, image_id)
         return Image.open(io.BytesIO(response.read()))
+    
+    def get_metadata(self, image_id: str) -> dict:
+        """Получить метаданные изображения из Qdrant."""
+        # Получаем точку из Qdrant по ID
+        result = self.qdrant.retrieve(
+            collection_name=self.collection,
+            ids=[image_id],
+        )
+        if not result or len(result) == 0:
+            raise KeyError(f"Image {image_id} not found")
+        # Возвращаем payload без image_id (он уже есть в ключе)
+        payload = result[0].payload
+        return {k: v for k, v in payload.items() if k != "image_id"}
 
     def add_image(
         self, image_bytes: bytes, embedding: np.ndarray, metadata: dict

@@ -5,8 +5,17 @@ from pydantic import BaseModel, Field
 
 class Coordinates(BaseModel):
     """Координаты в формате WGS84."""
-    lat: float = Field(..., description="Широта (latitude) в градусах, диапазон [-90, 90]")
-    lon: float = Field(..., description="Долгота (longitude) в градусах, диапазон [-180, 180]")
+    """Координаты прямоугольника в формате WGS84.
+
+    tl - верхний левый угол (top-left)
+    br - нижний правый угол (bottom-right)
+    E - долгота (East)
+    N - широта (North)
+    """
+    tl_E: float = Field(..., description="Долгота верхнего левого угла (longitude), диапазон [-180, 180]")
+    tl_N: float = Field(..., description="Широта верхнего левого угла (latitude), диапазон [-90, 90]")
+    br_E: float = Field(..., description="Долгота нижнего правого угла (longitude), диапазон [-180, 180]")
+    br_N: float = Field(..., description="Широта нижнего правого угла (latitude), диапазон [-90, 90]")
 
 
 class GalleryUploadRequest(BaseModel):
@@ -14,7 +23,7 @@ class GalleryUploadRequest(BaseModel):
     image: str = Field(..., description="Base64 кодированное изображение")
     coordinates: Optional[Coordinates] = Field(
         default=None,
-        description="Координаты места съемки (lat, lon)"
+        description="Координаты прямоугольника (tl_E, tl_N, br_E, br_N)"
     )
     metadata: Optional[Dict[str, Any]] = Field(
         default=None,

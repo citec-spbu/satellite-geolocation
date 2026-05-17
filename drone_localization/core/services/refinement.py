@@ -19,7 +19,7 @@ logger = logging.getLogger(__name__)
 class RefinementService:
     def __init__(
         self,
-        model_path: str = "weights/net_best_refinement.pth",
+        model_path: str = "weights/net_best.pth",
         config_path: str = "models/new_example_config.json",
     ):
         self.model_path = model_path
@@ -37,7 +37,7 @@ class RefinementService:
         if self.model is None:
             self.model = FPI(self.opt, device=self.device)
             model_keys = set(self.model.state_dict().keys())
-            ckpt = torch.load(self.model_path, map_location=self.device)
+            ckpt = torch.load(self.model_path, map_location=self.device, weights_only=False)
             new_state_dict = {}
             for k, v in ckpt.items():
                 if k in model_keys:
@@ -86,12 +86,11 @@ class RefinementService:
         if self.model is None:
             self.load_model()
         # 2. Декодирование строки в бинарные данные
-        with Image.open(drone_image) as img:
-            x = transformation["UAV"](img).unsqueeze(0).to(self.device)
-        with Image.open(satellite_image) as img:
-            z = transformation["satellite"](img).unsqueeze(0).to(self.device)
-            height = img.height
-            width = img.width
+        
+        x = transformation["UAV"](drone_image).unsqueeze(0).to(self.device)
+        z = transformation["satellite"](satellite_image).unsqueeze(0).to(self.device)
+        height = satellite_image.height
+        width = satellite_image.width
         self.model.eval()
         with torch.no_grad():
             cls_out, reg_out = self.model(x, z)  # используем только сls reg пустой
