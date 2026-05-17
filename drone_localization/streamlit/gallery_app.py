@@ -51,6 +51,14 @@ if page == "📤 Загрузить изображение":
         st.markdown("### Метаданные (опционально)")
         metadata_filename = st.text_input("Имя файла", "")
         metadata_location = st.text_input("Локация", "")
+
+        st.markdown("#### Координаты места съемки")
+        col_lat, col_lon = st.columns(2)
+        with col_lat:
+            lat = st.number_input("Широта (lat)", min_value=-90.0, max_value=90.0, value=None, step=0.000001)
+        with col_lon:
+            lon = st.number_input("Долгота (lon)", min_value=-180.0, max_value=180.0, value=None, step=0.000001)
+
         metadata_custom = st.text_area("Дополнительные метаданные (JSON)", "{}")
 
     if uploaded_file:
@@ -72,6 +80,11 @@ if page == "📤 Загрузить изображение":
                 st.error("Некорректный JSON в дополнительных метаданных")
                 metadata = {}
 
+        # Добавляем координаты если указаны
+        coordinates = None
+        if lat is not None and lon is not None:
+            coordinates = {"lat": lat, "lon": lon}
+
         if st.button("Загрузить в галерею", type="primary"):
             with st.spinner("Загрузка изображения..."):
                 try:
@@ -79,10 +92,17 @@ if page == "📤 Загрузить изображение":
                     uploaded_file.seek(0)
                     img_b64 = encode_image(uploaded_file)
 
-                    # Отправляем запрос
+                    # Отправляем запрос с координатами в правильном формате
+                    payload = {"image": img_b64}
+                    if coordinates:
+                        # Формат coordinates должен быть объектом с lat и lon
+                        payload["coordinates"] = {"lat": coordinates["lat"], "lon": coordinates["lon"]}
+                    if metadata:
+                        payload["metadata"] = metadata
+
                     response = requests.post(
                         f"{API_URL}/api/gallery/upload",
-                        json={"image": img_b64, "metadata": metadata if metadata else None}
+                        json=payload
                     )
 
                     if response.status_code == 200:
@@ -96,6 +116,15 @@ if page == "📤 Загрузить изображение":
                             img_data = get_response.json()
                             loaded_img = decode_image(img_data["image"])
                             st.image(loaded_img, caption=f"Загруженное изображение (ID: {result['image_id']})", use_column_width=True)
+
+                            # Показываем координаты если есть
+                            if img_data.get("coordinates"):
+                                coords = img_data["coordinates"]
+                                st.success(f"📍 Координаты: **{coords['lat']:.6f}**, **{coords['lon']:.6f}**")
+                                st.markdown(f"[Открыть в Google Maps](https://www.google.com/maps?q={coords['lat']},{coords['lon']})")
+
+                            if img_data.get("metadata"):
+                                st.json(img_data["metadata"])
                     else:
                         st.error(f"❌ Ошибка загрузки: {response.json().get('detail', 'Неизвестная ошибка')}")
 
@@ -149,6 +178,13 @@ elif page == "🔍 Поиск похожих":
                                     result_img = decode_image(result["image"])
                                     st.image(result_img, use_column_width=True)
                                     st.code(f"Image ID: {result['image_id']}")
+
+                                    # Показываем координаты если есть
+                                    if result.get("coordinates"):
+                                        coords = result["coordinates"]
+                                        st.success(f"📍 Координаты: **{coords['lat']:.6f}**, **{coords['lon']:.6f}**")
+                                        st.markdown(f"[Открыть в Google Maps](https://www.google.com/maps?q={coords['lat']},{coords['lon']})")
+
                                     if result.get("metadata"):
                                         st.json(result["metadata"])
                     else:
