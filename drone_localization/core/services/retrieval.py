@@ -7,7 +7,7 @@ import numpy as np
 from .inference import InferenceService
 from .gallery import GalleryService
 from ..schemas.retrieval import RetrievalResult
-from infrastructure.gallery_repository_impl import GalleryRepositoryImpl
+from drone_localization.infrastructure.gallery_repository_impl import GalleryRepositoryImpl
 logger = logging.getLogger(__name__)
 
 class RetrievalService:
