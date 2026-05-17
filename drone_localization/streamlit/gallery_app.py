@@ -1,0 +1,315 @@
+import os
+import base64
+import io
+import json
+
+import requests
+import streamlit as st
+from PIL import Image
+
+API_URL = os.getenv("API_URL", "http://localhost:8000")
+
+st.set_page_config(page_title="🖼️ Gallery", page_icon="🖼️", layout="wide")
+
+st.title("🖼️ Satellite Image Gallery")
+st.markdown("Загрузка, просмотр и поиск похожих спутниковых изображений")
+
+# Боковое меню
+st.sidebar.header("Меню")
+page = st.sidebar.radio(
+    "Выберите действие:",
+    ["📤 Загрузить изображение", "🔍 Поиск похожих", "📊 Просмотр галереи", "⚙️ Управление"]
+)
+
+# Helper функции
+def encode_image(file) -> str:
+    """Кодирует файл в base64 строку"""
+    return base64.b64encode(file.read()).decode("utf-8")
+
+
+def decode_image(base64_str: str) -> Image.Image:
+    """Декодирует base64 строку в PIL Image"""
+    img_bytes = base64.b64decode(base64_str)
+    return Image.open(io.BytesIO(img_bytes))
+
+
+# ==================== ЗАГРУЗКА ИЗОБРАЖЕНИЯ ====================
+if page == "📤 Загрузить изображение":
+    st.header("📤 Загрузить новое изображение")
+    st.markdown("Загрузите спутниковое изображение для добавления в галерею")
+
+    col1, col2 = st.columns([2, 1])
+
+    with col1:
+        uploaded_file = st.file_uploader(
+            "Выберите файл изображения",
+            type=["jpg", "jpeg", "png"],
+            help="Поддерживаются форматы: JPEG, PNG"
+        )
+
+    with col2:
+        st.markdown("### Метаданные (опционально)")
+        metadata_filename = st.text_input("Имя файла", "")
+        metadata_location = st.text_input("Локация", "")
+        metadata_custom = st.text_area("Дополнительные метаданные (JSON)", "{}")
+
+    if uploaded_file:
+        # Показываем превью
+        image = Image.open(uploaded_file)
+        st.image(image, caption="Превью загружаемого изображения", use_column_width=True)
+
+        # Подготовка метаданных
+        metadata = {}
+        if metadata_filename:
+            metadata["filename"] = metadata_filename
+        if metadata_location:
+            metadata["location"] = metadata_location
+        if metadata_custom and metadata_custom.strip() != "{}":
+            try:
+                custom_meta = json.loads(metadata_custom)
+                metadata.update(custom_meta)
+            except json.JSONDecodeError:
+                st.error("Некорректный JSON в дополнительных метаданных")
+                metadata = {}
+
+        if st.button("Загрузить в галерею", type="primary"):
+            with st.spinner("Загрузка изображения..."):
+                try:
+                    # Кодируем изображение
+                    uploaded_file.seek(0)
+                    img_b64 = encode_image(uploaded_file)
+
+                    # Отправляем запрос
+                    response = requests.post(
+                        f"{API_URL}/api/gallery/upload",
+                        json={"image": img_b64, "metadata": metadata if metadata else None}
+                    )
+
+                    if response.status_code == 200:
+                        result = response.json()
+                        st.success(f"✅ Изображение успешно загружено!")
+                        st.info(f"**Image ID:** `{result['image_id']}`")
+
+                        # Показываем загруженное изображение
+                        get_response = requests.get(f"{API_URL}/api/gallery/image/{result['image_id']}")
+                        if get_response.status_code == 200:
+                            img_data = get_response.json()
+                            loaded_img = decode_image(img_data["image"])
+                            st.image(loaded_img, caption=f"Загруженное изображение (ID: {result['image_id']})", use_column_width=True)
+                    else:
+                        st.error(f"❌ Ошибка загрузки: {response.json().get('detail', 'Неизвестная ошибка')}")
+
+                except Exception as e:
+                    st.error(f"❌ Произошла ошибка: {str(e)}")
+
+
+# ==================== ПОИСК ПОХОЖИХ ====================
+elif page == "🔍 Поиск похожих":
+    st.header("🔍 Поиск похожих изображений")
+    st.markdown("Загрузите изображение для поиска похожих в галерее")
+
+    col1, col2 = st.columns(2)
+
+    with col1:
+        search_file = st.file_uploader(
+            "Изображение для поиска",
+            type=["jpg", "jpeg", "png"],
+            key="search_upload"
+        )
+
+    with col2:
+        top_k = st.slider("Количество результатов", min_value=1, max_value=20, value=5)
+
+    if search_file:
+        search_image = Image.open(search_file)
+        st.image(search_image, caption="Изображение для поиска", use_column_width=True)
+
+        if st.button("Найти похожие", type="primary"):
+            with st.spinner("Поиск похожих изображений..."):
+                try:
+                    search_file.seek(0)
+                    img_b64 = encode_image(search_file)
+
+                    response = requests.post(
+                        f"{API_URL}/api/gallery/search",
+                        json={"image": img_b64, "top_k": top_k}
+                    )
+
+                    if response.status_code == 200:
+                        results = response.json()["results"]
+
+                        if not results:
+                            st.warning("Похожие изображения не найдены")
+                        else:
+                            st.success(f"Найдено {len(results)} похожих изображений")
+
+                            # Показываем результаты
+                            for i, result in enumerate(results):
+                                with st.expander(f"🖼️ Результат #{i+1} (Score: {result['score']:.4f})"):
+                                    result_img = decode_image(result["image"])
+                                    st.image(result_img, use_column_width=True)
+                                    st.code(f"Image ID: {result['image_id']}")
+                                    if result.get("metadata"):
+                                        st.json(result["metadata"])
+                    else:
+                        st.error(f"❌ Ошибка поиска: {response.json().get('detail', 'Неизвестная ошибка')}")
+
+                except Exception as e:
+                    st.error(f"❌ Произошла ошибка: {str(e)}")
+
+
+# ==================== ПРОСМОТР ГАЛЕРЕИ ====================
+elif page == "📊 Просмотр галереи":
+    st.header("📊 Просмотр всех изображений в галерее")
+
+    # Получаем количество изображений
+    try:
+        count_response = requests.get(f"{API_URL}/api/gallery/count")
+        if count_response.status_code == 200:
+            total_count = count_response.json()["count"]
+            st.metric("Всего изображений в галерее", total_count)
+        else:
+            st.error("Не удалось получить количество изображений")
+            total_count = 0
+    except Exception as e:
+        st.error(f"Ошибка подключения к API: {str(e)}")
+        total_count = 0
+
+    if total_count > 0:
+        # Запрашиваем health check
+        try:
+            health_response = requests.get(f"{API_URL}/api/gallery/health")
+            if health_response.status_code == 200:
+                health_data = health_response.json()
+                if health_data["healthy"]:
+                    st.success("✅ Хранилище работает нормально")
+                else:
+                    st.warning(f"⚠️ Проблемы с хранилищем: {health_data.get('details', '')}")
+        except:
+            pass
+
+        st.divider()
+
+        # Поле для ввода ID конкретного изображения
+        st.subheader("Просмотр по ID")
+        col1, col2 = st.columns([3, 1])
+        with col1:
+            image_id_input = st.text_input("Введите Image ID", placeholder="Например: abc123...")
+        with col2:
+            view_btn = st.button("Просмотреть", type="secondary")
+
+        if view_btn and image_id_input:
+            with st.spinner("Загрузка изображения..."):
+                try:
+                    response = requests.get(f"{API_URL}/api/gallery/image/{image_id_input}")
+                    if response.status_code == 200:
+                        img_data = response.json()
+                        img = decode_image(img_data["image"])
+                        st.image(img, caption=f"Image ID: {image_id_input}", use_column_width=True)
+                        if img_data.get("metadata"):
+                            st.json(img_data["metadata"])
+                    else:
+                        st.error(f"Изображение не найдено: {response.json().get('detail', 'Unknown error')}")
+                except Exception as e:
+                    st.error(f"Ошибка: {str(e)}")
+
+        st.divider()
+
+        # Примечание
+        st.info("""
+        💡 **Подсказка:** Для просмотра всех изображений используйте эндпоинт `/api/gallery/count`
+        для получения количества, а затем запрашивайте каждое изображение по ID.
+
+        В будущей версии здесь будет реализована пагинация для просмотра всех изображений.
+        """)
+
+
+# ==================== УПРАВЛЕНИЕ ====================
+elif page == "⚙️ Управление":
+    st.header("⚙️ Управление галереей")
+    st.warning("⚠️ Будьте осторожны! Некоторые действия необратимы.")
+
+    # Статистика
+    try:
+        count_response = requests.get(f"{API_URL}/api/gallery/count")
+        if count_response.status_code == 200:
+            count = count_response.json()["count"]
+            st.metric("Текущее количество изображений", count)
+    except:
+        pass
+
+    st.divider()
+
+    # Удаление по ID
+    st.subheader("🗑️ Удалить изображение по ID")
+    col1, col2 = st.columns([3, 1])
+    with col1:
+        delete_id = st.text_input("Image ID для удаления", key="delete_input")
+    with col2:
+        delete_btn = st.button("Удалить", type="secondary", key="delete_btn")
+
+    if delete_btn and delete_id:
+        if st.checkbox("Вы уверены? Это действие нельзя отменить.", key="confirm_delete"):
+            with st.spinner("Удаление..."):
+                try:
+                    response = requests.delete(f"{API_URL}/api/gallery/image/{delete_id}")
+                    if response.status_code == 200:
+                        st.success(f"✅ Изображение {delete_id} успешно удалено")
+                    else:
+                        st.error(f"Ошибка: {response.json().get('detail', 'Неизвестная ошибка')}")
+                except Exception as e:
+                    st.error(f"Ошибка: {str(e)}")
+        else:
+            st.warning("Подтвердите удаление")
+
+    st.divider()
+
+    # Очистка всей галереи
+    st.subheader("☢️ Полная очистка галереи")
+    st.error("⚠️ Внимание! Это удалит ВСЕ изображения из галереи без возможности восстановления!")
+
+    if st.button("☢️ ОЧИСТИТЬ ВСЮ ГАЛЕРЕЮ", type="primary", key="clear_all"):
+        confirm_clear = st.checkbox("Я полностью осознаю последствия. Все изображения будут удалены навсегда.", key="confirm_clear")
+
+        if confirm_clear:
+            with st.spinner("Очистка галереи..."):
+                try:
+                    response = requests.delete(f"{API_URL}/api/gallery/clear")
+                    if response.status_code == 200:
+                        st.success("✅ Галерея полностью очищена")
+                        st.rerun()
+                    else:
+                        st.error(f"Ошибка: {response.json().get('detail', 'Неизвестная ошибка')}")
+                except Exception as e:
+                    st.error(f"Ошибка: {str(e)}")
+        else:
+            st.warning("Подтвердите очистку галереи")
+
+    st.divider()
+
+    # Health check
+    st.subheader("🏥 Проверка состояния")
+    if st.button("Проверить состояние хранилища", key="health_check"):
+        with st.spinner("Проверка..."):
+            try:
+                response = requests.get(f"{API_URL}/api/gallery/health")
+                if response.status_code == 200:
+                    data = response.json()
+                    if data["healthy"]:
+                        st.success("✅ Хранилище работает нормально")
+                        st.json(data)
+                    else:
+                        st.error(f"❌ Проблемы с хранилищем: {data.get('details', 'Неизвестная ошибка')}")
+                else:
+                    st.error(f"Ошибка API: {response.status_code}")
+            except Exception as e:
+                st.error(f"Ошибка подключения: {str(e)}")
+
+
+# Footer
+st.divider()
+st.markdown("""
+<div style='text-align: center; color: gray;'>
+    <small>Gallery Service UI | Powered by Streamlit & FastAPI</small>
+</div>
+""", unsafe_allow_html=True)

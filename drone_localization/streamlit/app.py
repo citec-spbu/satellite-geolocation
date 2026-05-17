@@ -1,6 +1,6 @@
-import os
 import base64
 import io
+import os
 
 import requests
 import streamlit as st
@@ -21,7 +21,9 @@ if uploaded:
             img_b64 = base64.b64encode(img_bytes).decode("utf-8")
 
             # Запрос к API
-            res = requests.post(f"{API_URL}/api/localize", json={"drone_image": img_b64})
+            res = requests.post(
+                f"{API_URL}/api/localize", json={"drone_image": img_b64}
+            )
 
             if res.status_code == 200:
                 data = res.json()

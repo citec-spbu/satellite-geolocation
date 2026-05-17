@@ -1,16 +1,19 @@
 import io
-import uuid
 import logging
-import numpy as np
+import uuid
 from typing import List, Tuple
+
+import numpy as np
+from minio import Minio
 from PIL import Image
 from qdrant_client import QdrantClient
 from qdrant_client.http import models as qdrant_models
-from minio import Minio
-from ..core.interfaces.gallery_repository import GalleryRepository
+
 from ..configs.settings import get_settings
+from ..core.interfaces.gallery_repository import GalleryRepository
 
 logger = logging.getLogger(__name__)
+
 
 class GalleryRepositoryImpl(GalleryRepository):
     def __init__(self):
@@ -21,7 +24,7 @@ class GalleryRepositoryImpl(GalleryRepository):
             settings.minio_endpoint,
             access_key=settings.minio_access_key,
             secret_key=settings.minio_secret_key,
-            secure=False
+            secure=False,
         )
         self.bucket = settings.minio_bucket
         # Убедимся, что бакет существует
@@ -36,17 +39,18 @@ class GalleryRepositoryImpl(GalleryRepository):
             self.qdrant.create_collection(
                 collection_name=self.collection,
                 vectors_config=qdrant_models.VectorParams(
-                    size=512,
-                    distance=qdrant_models.Distance.COSINE
-                )
+                    size=512, distance=qdrant_models.Distance.COSINE
+                ),
             )
             logger.info(f"Created Qdrant collection '{self.collection}'")
 
-    def search_similar(self, embedding: np.ndarray, top_k: int) -> List[Tuple[str, float]]:
+    def search_similar(
+        self, embedding: np.ndarray, top_k: int
+    ) -> List[Tuple[str, float]]:
         results = self.qdrant.search(
             collection_name=self.collection,
             query_vector=embedding.tolist(),
-            limit=top_k
+            limit=top_k,
         )
         return [(hit.payload["image_id"], hit.score) for hit in results]
 
@@ -54,7 +58,9 @@ class GalleryRepositoryImpl(GalleryRepository):
         response = self.minio.get_object(self.bucket, image_id)
         return Image.open(io.BytesIO(response.read()))
 
-    def add_image(self, image_bytes: bytes, embedding: np.ndarray, metadata: dict) -> str:
+    def add_image(
+        self, image_bytes: bytes, embedding: np.ndarray, metadata: dict
+    ) -> str:
         image_id = str(uuid.uuid4())
         # Сохраняем в MinIO
         self.minio.put_object(
@@ -62,7 +68,7 @@ class GalleryRepositoryImpl(GalleryRepository):
             image_id,
             io.BytesIO(image_bytes),
             length=len(image_bytes),
-            content_type=metadata.get("content_type", "image/jpeg")
+            content_type=metadata.get("content_type", "image/jpeg"),
         )
         # Вставляем в Qdrant
         self.qdrant.upsert(
@@ -71,9 +77,9 @@ class GalleryRepositoryImpl(GalleryRepository):
                 qdrant_models.PointStruct(
                     id=image_id,
                     vector=embedding.tolist(),
-                    payload={**metadata, "image_id": image_id}
+                    payload={**metadata, "image_id": image_id},
                 )
-            ]
+            ],
         )
         logger.info(f"Added image {image_id} to gallery")
         return image_id
@@ -83,7 +89,7 @@ class GalleryRepositoryImpl(GalleryRepository):
             return self.qdrant.count(collection_name=self.collection).count
         except Exception:
             return 0
-        
+
     def delete_image(self, image_id: str) -> bool:
         try:
             # Удаляем из MinIO
@@ -91,7 +97,7 @@ class GalleryRepositoryImpl(GalleryRepository):
             # Удаляем из Qdrant
             self.qdrant.delete(
                 collection_name=self.collection,
-                points_selector=qdrant_models.PointIdsList(points=[image_id])
+                points_selector=qdrant_models.PointIdsList(points=[image_id]),
             )
             logger.info(f"Deleted image {image_id}")
             return True
