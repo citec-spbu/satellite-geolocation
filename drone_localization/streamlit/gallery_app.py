@@ -313,46 +313,46 @@ elif page == "⚙️ Управление":
 
     st.divider()
 
-st.subheader("☢️ Полная очистка галереи")
-st.error("⚠️ Внимание! Это удалит ВСЕ изображения из галереи без возможности восстановления!")
+    st.subheader("☢️ Полная очистка галереи")
+    st.error("⚠️ Внимание! Это удалит ВСЕ изображения из галереи без возможности восстановления!")
 
-# Инициализация состояния в сессии
-if 'confirm_clear' not in st.session_state:
-    st.session_state.confirm_clear = False
+    # Инициализация состояния в сессии
+    if 'confirm_clear' not in st.session_state:
+        st.session_state.confirm_clear = False
 
-# Кнопка запускает процесс подтверждения
-if st.button("☢️ ОЧИСТИТЬ ВСЮ ГАЛЕРЕЮ", type="primary", key="clear_all_btn"):
-    # Устанавливаем флаг, что пользователь хочет очистить
-    st.session_state.confirm_clear = True
-    st.rerun()  # Перезагружаем, чтобы показать чекбокс
+    # Кнопка запускает процесс подтверждения
+    if st.button("☢️ ОЧИСТИТЬ ВСЮ ГАЛЕРЕЮ", type="primary", key="clear_all_btn"):
+        # Устанавливаем флаг, что пользователь хочет очистить
+        st.session_state.confirm_clear = True
+        st.rerun()  # Перезагружаем, чтобы показать чекбокс
 
-# Если флаг установлен, показываем чекбокс и логику удаления
-if st.session_state.confirm_clear:
-    st.warning("Подтвердите действие ниже:")
-    confirm_checkbox = st.checkbox("Я полностью осознаю последствия. Все изображения будут удалены навсегда.", key="confirm_checkbox_key")
+    # Если флаг установлен, показываем чекбокс и логику удаления
+    if st.session_state.confirm_clear:
+        st.warning("Подтвердите действие ниже:")
+        confirm_checkbox = st.checkbox("Я полностью осознаю последствия. Все изображения будут удалены навсегда.", key="confirm_checkbox_key")
 
-    if confirm_checkbox:
-        with st.spinner("Очистка галереи..."):
-            try:
-                response = requests.delete(f"{API_URL}/api/gallery/clear")
-                if response.status_code == 200:
-                    st.success("✅ Галерея полностью очищена")
-                    # Сбрасываем флаг и перезагружаем
+        if confirm_checkbox:
+            with st.spinner("Очистка галереи..."):
+                try:
+                    response = requests.delete(f"{API_URL}/api/gallery/clear")
+                    if response.status_code == 200:
+                        st.success("✅ Галерея полностью очищена")
+                        # Сбрасываем флаг и перезагружаем
+                        st.session_state.confirm_clear = False
+                        st.rerun()
+                    else:
+                        st.error(f"Ошибка: {response.json().get('detail', 'Неизвестная ошибка')}")
+                        st.session_state.confirm_clear = False # Сброс при ошибке тоже желателен
+                except Exception as e:
+                    st.error(f"Ошибка соединения: {str(e)}")
+                    st.session_state.confirm_clear = False
+                
+                # Кнопка отмены, если передумали
+                if st.button("Отмена", key="cancel_clear"):
                     st.session_state.confirm_clear = False
                     st.rerun()
-                else:
-                    st.error(f"Ошибка: {response.json().get('detail', 'Неизвестная ошибка')}")
-                    st.session_state.confirm_clear = False # Сброс при ошибке тоже желателен
-            except Exception as e:
-                st.error(f"Ошибка соединения: {str(e)}")
-                st.session_state.confirm_clear = False
-            
-            # Кнопка отмены, если передумали
-            if st.button("Отмена", key="cancel_clear"):
-                st.session_state.confirm_clear = False
-                st.rerun()
-    else:
-        st.info("Нажмите на чекбокс выше для подтверждения.")
+        else:
+            st.info("Нажмите на чекбокс выше для подтверждения.")
 
     st.divider()
 
