@@ -29,11 +29,11 @@ async def run_full_pipeline(request: LocalizationRequest):
         satellite_result = retrieval_service.find_match(request.drone_image)
 
         logger.info("1st model's work is ended")
-        logger.info("Treshhold check")
+        '''logger.info("Treshhold check")
         # Проверка порога
         if satellite_result.score < 0.3:
             logger.info("Treshhold not passed")
-            raise HTTPException(status_code=404, detail="Satellite image not found")
+            raise HTTPException(status_code=404, detail="Satellite image not found")'''
 
         logger.info("Start 2nd model")
         # 2. Уточнение позиции (Model 2) -> возвращает пиксельные координаты (x, y) на спутниковом изображении
@@ -47,9 +47,13 @@ async def run_full_pipeline(request: LocalizationRequest):
         if satellite_result.metadata is None:
             raise HTTPException(status_code=500, detail="Satellite metadata not found")
 
+        logger.info("Satellit's metadata was found")
         # Определяем размеры спутникового изображения
         sat_width, sat_height = satellite_result.image.size
 
+        logger.info("Satellite's width and height is known:", sat_width, sat_height)
+
+        logger.info("2nd model's output is pixels now doing lat and lon")
         # Конвертируем пиксельные координаты в GPS (широта, долгота)
         latitude, longitude = pixel_coords_to_jps(
             satellite_meta=satellite_result.metadata,
@@ -62,10 +66,11 @@ async def run_full_pipeline(request: LocalizationRequest):
         # 3. Сборка ответа СТРОГО по схеме jsons-talking.txt
         # coordinates - это широта и долгота (lat, lon) в виде прямоугольника
         # Для точечного результата используем одинаковые координаты для всех углов
+        logger.info("Response")
         return LocalizationResponse(
             drone_image=request.drone_image,  # Как на схеме
             satellite_image=satellite_b64,  # Как на схеме
-            coordinates=Coordinates(latitude, longitude),  # Точечные координаты (lat, lon)
+            coordinates=Coordinates(lat=latitude, lon=longitude),  # Точечные координаты (lat, lon)
             confidence=satellite_result.score,  # Как на схеме
         )
     except HTTPException:

@@ -47,10 +47,10 @@ def pixel_coords_to_jps(
         Our test images are square 768x768 pixels, but for non-test datasets
         you need to provide the actual width and height of the satellite image.
     """
-    tl_N = satellite_metadata["tl_N"]  # latitude top-left
-    tl_E = satellite_metadata["tl_E"]  # longitude top-left
-    br_N = satellite_metadata["br_N"]  # latitude bottom-right
-    br_E = satellite_metadata["br_E"]  # longitude bottom-right
+    tl_N = satellite_meta["coordinates"]["tl_N"]  # latitude top-left
+    tl_E = satellite_meta["coordinates"]["tl_E"]  # longitude top-left
+    br_N = satellite_meta["coordinates"]["br_N"]  # latitude bottom-right
+    br_E = satellite_meta["coordinates"]["br_E"]  # longitude bottom-right
 
     lat_range = tl_N - br_N
     lon_range = br_E - tl_E
