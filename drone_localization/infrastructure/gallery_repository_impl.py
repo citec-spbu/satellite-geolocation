@@ -47,12 +47,12 @@ class GalleryRepositoryImpl(GalleryRepository):
     def search_similar(
         self, embedding: np.ndarray, top_k: int
     ) -> List[Tuple[str, float]]:
-        results = self.qdrant.search(
+        results = self.qdrant.query_points(
             collection_name=self.collection,
-            query_vector=embedding.tolist(),
+            query=embedding.tolist(),
             limit=top_k,
         )
-        return [(hit.payload["image_id"], hit.score) for hit in results]
+        return [(hit.payload["image_id"], hit.score) for hit in results.points]
 
     def get_image(self, image_id: str) -> Image.Image:
         response = self.minio.get_object(self.bucket, image_id)
