@@ -13,4 +13,4 @@ class LocalizationResponse(BaseModel):
     drone_image: str
     satellite_image: str
     coordinates: Coordinates  # Явно указываем что это {lat, lon}
-    confidence: float
+    confidence: float = Field(..., ge=0.0, le=1.0, description='Уверенность модели')
