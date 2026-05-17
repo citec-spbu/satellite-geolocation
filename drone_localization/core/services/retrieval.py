@@ -76,7 +76,7 @@ class RetrievalService:
         best_id, best_score = hits[0]
         sat_img = self.gallery.get_image(best_id)
         metadata = self.gallery_repo.get_metadata(best_id)
-        return RetrievalResult(image=sat_img, score=best_score)
+        return RetrievalResult(image=sat_img, score=best_score, metadata=metadata)
 
     def _find_top_k_pil(self, drone_img: Image.Image, top_k: int) -> List[RetrievalResult]:
         emb = self.inference.extract_drone_embedding(drone_img)

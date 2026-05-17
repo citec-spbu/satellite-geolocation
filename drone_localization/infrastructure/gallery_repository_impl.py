@@ -64,6 +64,8 @@ class GalleryRepositoryImpl(GalleryRepository):
         result = self.qdrant.retrieve(
             collection_name=self.collection,
             ids=[image_id],
+            with_payload=True,
+            with_vectors=False
         )
         if not result or len(result) == 0:
             raise KeyError(f"Image {image_id} not found")
@@ -119,14 +121,41 @@ class GalleryRepositoryImpl(GalleryRepository):
             return False
 
     def clear(self) -> None:
-        # Очищаем Qdrant коллекцию
-        self.qdrant.delete_collection(collection_name=self.collection)
-        self._init_qdrant_collection()
-        # Очищаем MinIO бакет (удаляем все объекты)
-        objects = list(self.minio.list_objects(self.bucket))
-        for obj in objects:
-            self.minio.remove_object(self.bucket, obj.object_name)
-        logger.info("Gallery cleared")
+            logger.info("Starting gallery clear operation...")
+
+            # Сначала очищаем Qdrant коллекцию (быстрее и проще)
+            try:
+                logger.info("Deleting Qdrant collection...")
+                self.qdrant.delete_collection(collection_name=self.collection)
+
+                logger.info("Recreating Qdrant collection...")
+                self._init_qdrant_collection()
+                logger.info("Qdrant collection cleared successfully")
+            except Exception as e:
+                logger.error(f"Error clearing Qdrant collection: {e}")
+                raise
+
+            # Затем очищаем MinIO бакет (удаляем все объекты)
+            try:
+                objects = list(self.minio.list_objects(self.bucket, recursive=True))
+                logger.info(f"Found {len(objects)} objects in MinIO bucket '{self.bucket}'")
+
+                if objects:
+                    for obj in objects:
+                        try:
+                            self.minio.remove_object(self.bucket, obj.object_name)
+                            logger.debug(f"Removed object: {obj.object_name}")
+                        except Exception as e:
+                            logger.warning(f"Failed to remove object {obj.object_name}: {e}")
+
+                    logger.info(f"Removed {len(objects)} objects from MinIO")
+                else:
+                    logger.info("No objects found in MinIO bucket")
+
+                logger.info("Gallery cleared successfully")
+            except Exception as e:
+                logger.error(f"Error clearing MinIO bucket: {e}")
+                raise
 
     def health_check(self) -> bool:
         try:
