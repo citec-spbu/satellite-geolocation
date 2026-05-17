@@ -1,13 +1,16 @@
 import io
-import os
 import logging
+import os
 from typing import List, Tuple
-from PIL import Image
+
 import numpy as np
-from .inference import InferenceService
+from PIL import Image
+
 from ..interfaces.gallery_repository import GalleryRepository
+from .inference import InferenceService
 
 logger = logging.getLogger(__name__)
+
 
 class GalleryService:
     def __init__(self, inference: InferenceService, repository: GalleryRepository):
@@ -28,7 +31,9 @@ class GalleryService:
     def get_image(self, image_id: str) -> Image.Image:
         return self.repo.get_image(image_id)
 
-    def search_similar(self, embedding: np.ndarray, top_k: int) -> List[Tuple[str, float]]:
+    def search_similar(
+        self, embedding: np.ndarray, top_k: int
+    ) -> List[Tuple[str, float]]:
         return self.repo.search_similar(embedding, top_k)
 
     def build_from_dataset(self, dataset_path: str, num_buildings: int = 40) -> int:
@@ -49,7 +54,9 @@ class GalleryService:
                 img_path = os.path.join(loc_path, img_name)
                 try:
                     img = Image.open(img_path).convert("RGB")
-                    self.upload_image(img, metadata={"filename": img_name, "location": location_id})
+                    self.upload_image(
+                        img, metadata={"filename": img_name, "location": location_id}
+                    )
                     uploaded += 1
                 except Exception as e:
                     logger.warning(f"Failed to process {img_path}: {e}")

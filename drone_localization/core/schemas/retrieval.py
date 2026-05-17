@@ -1,4 +1,3 @@
-from pydantic import BaseModel, Field
 from PIL.Image import Image as PILImage
 from typing import Optional, Dict, Any
 

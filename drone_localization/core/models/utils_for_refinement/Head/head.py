@@ -6,7 +6,6 @@ import torch.nn.functional as F
 from .ChannelEmbedding import ChannelEmbedding
 
 
-
 def make_head(opt):
     head_model = Head(opt)
     return head_model
