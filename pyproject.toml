@@ -23,7 +23,6 @@ dev = {features = ["devtools"], solve-group = "default"}
 [tool.pixi.tasks]
 dev-api = {cmd="uvicorn drone_localization.main:app --reload --host 0.0.0.0 --port 8000"}
 dev-ui = {cmd="streamlit run drone_localization/streamlit/app.py"}
-dev-galui = {cmd="streamlit run drone_localization/streamlit/gallery_app.py"}
 
 [tool.pixi.dependencies]
 minio = "*"
