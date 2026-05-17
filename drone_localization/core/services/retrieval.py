@@ -8,9 +8,7 @@ from drone_localization.infrastructure.gallery_repository_impl import GalleryRep
 from PIL import Image
 
 from ..schemas.retrieval import RetrievalResult
-from .gallery import GalleryService
-from .inference import InferenceService
-
+from drone_localization.infrastructure.gallery_repository_impl import GalleryRepositoryImpl
 logger = logging.getLogger(__name__)
 
 
@@ -83,7 +81,8 @@ class RetrievalService:
             raise RuntimeError("Gallery is empty")
         best_id, best_score = hits[0]
         sat_img = self.gallery.get_image(best_id)
-        return RetrievalResult(image=sat_img, score=best_score)
+        metadata = self.gallery_repo.get_metadata(best_id)
+        return RetrievalResult(image=sat_img, score=best_score, metadata=metadata)
 
     def _find_top_k_pil(
         self, drone_img: Image.Image, top_k: int
@@ -93,7 +92,8 @@ class RetrievalService:
         results = []
         for img_id, score in hits:
             sat_img = self.gallery.get_image(img_id)
-            results.append(RetrievalResult(image=sat_img, score=score))
+            metadata = self.gallery_repo.get_metadata(img_id)
+            results.append(RetrievalResult(image=sat_img, score=score, metadata=metadata))
         return results
 
     # Вспомогательные методы для конвертации base64 <-> PIL

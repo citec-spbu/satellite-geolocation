@@ -4,6 +4,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware  # ✅ Добавили CORS
 
 from drone_localization.api.endpoints.localize import router as localize_router
+from drone_localization.api.endpoints.gallery import router as gallery_router
 
 app = FastAPI(
     title="Satellite Geolocation API",
@@ -32,6 +33,7 @@ app.add_middleware(
 
 # Подключаем роутер
 app.include_router(localize_router, prefix="/api", tags=["localization"])
+app.include_router(gallery_router, prefix="/api/gallery", tags=["gallery"])
 
 
 @app.get("/")

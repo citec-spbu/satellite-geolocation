@@ -1,16 +1,19 @@
 import io
-import uuid
 import logging
-import numpy as np
+import uuid
 from typing import List, Tuple
+
+import numpy as np
+from minio import Minio
 from PIL import Image
 from qdrant_client import QdrantClient
 from qdrant_client.http import models as qdrant_models
-from minio import Minio
-from ..core.interfaces.gallery_repository import GalleryRepository
+
 from ..configs.settings import get_settings
+from ..core.interfaces.gallery_repository import GalleryRepository
 
 logger = logging.getLogger(__name__)
+
 
 class GalleryRepositoryImpl(GalleryRepository):
     def __init__(self):
@@ -21,7 +24,7 @@ class GalleryRepositoryImpl(GalleryRepository):
             settings.minio_endpoint,
             access_key=settings.minio_access_key,
             secret_key=settings.minio_secret_key,
-            secure=False
+            secure=False,
         )
         self.bucket = settings.minio_bucket
         # Убедимся, что бакет существует
@@ -36,25 +39,43 @@ class GalleryRepositoryImpl(GalleryRepository):
             self.qdrant.create_collection(
                 collection_name=self.collection,
                 vectors_config=qdrant_models.VectorParams(
-                    size=512,
-                    distance=qdrant_models.Distance.COSINE
-                )
+                    size=512, distance=qdrant_models.Distance.COSINE
+                ),
             )
             logger.info(f"Created Qdrant collection '{self.collection}'")
 
-    def search_similar(self, embedding: np.ndarray, top_k: int) -> List[Tuple[str, float]]:
-        results = self.qdrant.search(
+    def search_similar(
+        self, embedding: np.ndarray, top_k: int
+    ) -> List[Tuple[str, float]]:
+        results = self.qdrant.query_points(
             collection_name=self.collection,
-            query_vector=embedding.tolist(),
-            limit=top_k
+            query=embedding.tolist(),
+            limit=top_k,
         )
-        return [(hit.payload["image_id"], hit.score) for hit in results]
+        return [(hit.payload["image_id"], hit.score) for hit in results.points]
 
     def get_image(self, image_id: str) -> Image.Image:
         response = self.minio.get_object(self.bucket, image_id)
         return Image.open(io.BytesIO(response.read()))
+    
+    def get_metadata(self, image_id: str) -> dict:
+        """Получить метаданные изображения из Qdrant."""
+        # Получаем точку из Qdrant по ID
+        result = self.qdrant.retrieve(
+            collection_name=self.collection,
+            ids=[image_id],
+            with_payload=True,
+            with_vectors=False
+        )
+        if not result or len(result) == 0:
+            raise KeyError(f"Image {image_id} not found")
+        # Возвращаем payload без image_id (он уже есть в ключе)
+        payload = result[0].payload
+        return {k: v for k, v in payload.items() if k != "image_id"}
 
-    def add_image(self, image_bytes: bytes, embedding: np.ndarray, metadata: dict) -> str:
+    def add_image(
+        self, image_bytes: bytes, embedding: np.ndarray, metadata: dict
+    ) -> str:
         image_id = str(uuid.uuid4())
         # Сохраняем в MinIO
         self.minio.put_object(
@@ -62,7 +83,7 @@ class GalleryRepositoryImpl(GalleryRepository):
             image_id,
             io.BytesIO(image_bytes),
             length=len(image_bytes),
-            content_type=metadata.get("content_type", "image/jpeg")
+            content_type=metadata.get("content_type", "image/jpeg"),
         )
         # Вставляем в Qdrant
         self.qdrant.upsert(
@@ -71,9 +92,9 @@ class GalleryRepositoryImpl(GalleryRepository):
                 qdrant_models.PointStruct(
                     id=image_id,
                     vector=embedding.tolist(),
-                    payload={**metadata, "image_id": image_id}
+                    payload={**metadata, "image_id": image_id},
                 )
-            ]
+            ],
         )
         logger.info(f"Added image {image_id} to gallery")
         return image_id
@@ -83,7 +104,7 @@ class GalleryRepositoryImpl(GalleryRepository):
             return self.qdrant.count(collection_name=self.collection).count
         except Exception:
             return 0
-        
+
     def delete_image(self, image_id: str) -> bool:
         try:
             # Удаляем из MinIO
@@ -91,7 +112,7 @@ class GalleryRepositoryImpl(GalleryRepository):
             # Удаляем из Qdrant
             self.qdrant.delete(
                 collection_name=self.collection,
-                points_selector=qdrant_models.PointIdsList(points=[image_id])
+                points_selector=qdrant_models.PointIdsList(points=[image_id]),
             )
             logger.info(f"Deleted image {image_id}")
             return True
@@ -100,14 +121,41 @@ class GalleryRepositoryImpl(GalleryRepository):
             return False
 
     def clear(self) -> None:
-        # Очищаем Qdrant коллекцию
-        self.qdrant.delete_collection(collection_name=self.collection)
-        self._init_qdrant_collection()
-        # Очищаем MinIO бакет (удаляем все объекты)
-        objects = list(self.minio.list_objects(self.bucket))
-        for obj in objects:
-            self.minio.remove_object(self.bucket, obj.object_name)
-        logger.info("Gallery cleared")
+            logger.info("Starting gallery clear operation...")
+
+            # Сначала очищаем Qdrant коллекцию (быстрее и проще)
+            try:
+                logger.info("Deleting Qdrant collection...")
+                self.qdrant.delete_collection(collection_name=self.collection)
+
+                logger.info("Recreating Qdrant collection...")
+                self._init_qdrant_collection()
+                logger.info("Qdrant collection cleared successfully")
+            except Exception as e:
+                logger.error(f"Error clearing Qdrant collection: {e}")
+                raise
+
+            # Затем очищаем MinIO бакет (удаляем все объекты)
+            try:
+                objects = list(self.minio.list_objects(self.bucket, recursive=True))
+                logger.info(f"Found {len(objects)} objects in MinIO bucket '{self.bucket}'")
+
+                if objects:
+                    for obj in objects:
+                        try:
+                            self.minio.remove_object(self.bucket, obj.object_name)
+                            logger.debug(f"Removed object: {obj.object_name}")
+                        except Exception as e:
+                            logger.warning(f"Failed to remove object {obj.object_name}: {e}")
+
+                    logger.info(f"Removed {len(objects)} objects from MinIO")
+                else:
+                    logger.info("No objects found in MinIO bucket")
+
+                logger.info("Gallery cleared successfully")
+            except Exception as e:
+                logger.error(f"Error clearing MinIO bucket: {e}")
+                raise
 
     def health_check(self) -> bool:
         try:
