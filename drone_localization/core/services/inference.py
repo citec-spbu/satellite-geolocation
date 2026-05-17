@@ -1,18 +1,32 @@
 import logging
+
+import numpy as np
 import torch
 import torch.nn.functional as F
+from PIL import Image
 from torchvision import transforms
 from torchvision.transforms import InterpolationMode
-from PIL import Image
-import numpy as np
+from pathlib import Path
+
 from ..models.ConvNext.retrieval_utils import load_network
 
 logger = logging.getLogger(__name__)
 
+
 class InferenceService:
-    def __init__(self, model_name="convnext_tri", weights_dir="weights", device="cuda", image_size=(256, 256)):
-        self.device = device if torch.cuda.is_available() and device == "cuda" else "cpu"
+    def __init__(
+        self,
+        model_name="convnext_tri",
+        weights_dir="weights",
+        device="cuda",
+        image_size=(256, 256),
+        model_weights="net_152.pth"
+    ):
+        self.device = (
+            device if torch.cuda.is_available() and device == "cuda" else "cpu"
+        )
         self.image_size = image_size
+        self.model_weights = model_weights
 
         class Opt:
             def __init__(self):
@@ -33,15 +47,21 @@ class InferenceService:
                 self.lr = 0.01
 
         opt = Opt()
-        self.model, _, _ = load_network(name=opt.name, opt=opt, weights_dir=weights_dir)
+
+        self.model, _, _ = load_network(name=opt.name, opt=opt, weights_dir=weights_dir, model_weights=model_weights)
+
         self.model = self.model.to(self.device)
         self.model.eval()
 
-        self.transform = transforms.Compose([
-            transforms.Resize(self.image_size, interpolation=InterpolationMode.BICUBIC),
-            transforms.ToTensor(),
-            transforms.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225])
-        ])
+        self.transform = transforms.Compose(
+            [
+                transforms.Resize(
+                    self.image_size, interpolation=InterpolationMode.BICUBIC
+                ),
+                transforms.ToTensor(),
+                transforms.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225]),
+            ]
+        )
         logger.info(f"InferenceService loaded on {self.device}")
 
     def _preprocess(self, pil_img: Image.Image) -> torch.Tensor:

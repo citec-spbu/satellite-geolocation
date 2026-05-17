@@ -2,13 +2,17 @@ import base64
 import io
 import logging
 from typing import Dict, List, Optional, Tuple
-from PIL import Image
+
 import numpy as np
-from .inference import InferenceService
-from .gallery import GalleryService
+from drone_localization.infrastructure.gallery_repository_impl import GalleryRepositoryImpl
+from PIL import Image
+
 from ..schemas.retrieval import RetrievalResult
-from infrastructure.gallery_repository_impl import GalleryRepositoryImpl
+from .gallery import GalleryService
+from .inference import InferenceService
+
 logger = logging.getLogger(__name__)
+
 
 class RetrievalService:
     """
@@ -16,15 +20,17 @@ class RetrievalService:
     Сохраняет обратную совместимость с API, принимая base64 строки.
     Внутренняя логика работает с PIL.Image.
     """
+
     def __init__(
         self,
         dataset_path: str = "/content/SUES-200-512x512",
         device: str = "cuda" if __import__("torch").cuda.is_available() else "cpu",
         image_size: Tuple[int, int] = (256, 256),
+        model_weights: str = "net_152.pth"
     ):
         self.dataset_path = dataset_path
         # Инициализируем инфраструктурные компоненты
-        self.inference = InferenceService(device=device, image_size=image_size)
+        self.inference = InferenceService(device=device, image_size=image_size, model_weights=model_weights)
         self.gallery_repo = GalleryRepositoryImpl()
         self.gallery = GalleryService(self.inference, self.gallery_repo)
         # Ленивая загрузка галереи
@@ -53,7 +59,7 @@ class RetrievalService:
             {
                 "image": self._pil_to_b64(res.image),
                 "score": res.score,
-                "path": getattr(res, 'path', '')  # path больше не хранится
+                "path": getattr(res, "path", ""),  # path больше не хранится
             }
             for res in results
         ]
@@ -63,7 +69,9 @@ class RetrievalService:
         self._ensure_gallery()
         return self._find_match_pil(drone_img)
 
-    def find_top_k_pil(self, drone_img: Image.Image, top_k: int = 5) -> List[RetrievalResult]:
+    def find_top_k_pil(
+        self, drone_img: Image.Image, top_k: int = 5
+    ) -> List[RetrievalResult]:
         self._ensure_gallery()
         return self._find_top_k_pil(drone_img, top_k)
 
@@ -77,7 +85,9 @@ class RetrievalService:
         sat_img = self.gallery.get_image(best_id)
         return RetrievalResult(image=sat_img, score=best_score)
 
-    def _find_top_k_pil(self, drone_img: Image.Image, top_k: int) -> List[RetrievalResult]:
+    def _find_top_k_pil(
+        self, drone_img: Image.Image, top_k: int
+    ) -> List[RetrievalResult]:
         emb = self.inference.extract_drone_embedding(drone_img)
         hits = self.gallery.search_similar(emb, top_k=top_k)
         results = []
