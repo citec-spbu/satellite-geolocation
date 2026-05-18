@@ -2,6 +2,7 @@ import io
 import logging
 import os
 from typing import List, Tuple
+import json
 
 import numpy as np
 from PIL import Image
@@ -61,4 +62,111 @@ class GalleryService:
                 except Exception as e:
                     logger.warning(f"Failed to process {img_path}: {e}")
         logger.info(f"Built gallery from dataset: {uploaded} images")
+        return uploaded
+    
+    def import_dataset_with_metadata(self, dataset_path: str, max_images: int = None) -> int:
+        """
+        Импортирует датасет в формате:
+        data/
+          └── location/
+              ├── satellite/
+              ├── uav/
+              └── metadata.json
+
+        Args:
+            dataset_path: Путь к корневой папке датасета
+            max_images: Максимальное количество изображений для импорта (None = все)
+
+        Returns:
+            Количество успешно импортированных изображений
+        """
+        uploaded = 0
+        skipped = 0
+        errors = 0
+
+        # Проходим по всем локациям
+        for location_name in os.listdir(dataset_path):
+            location_path = os.path.join(dataset_path, location_name)
+            if not os.path.isdir(location_path):
+                continue
+
+            satellite_dir = os.path.join(location_path, "satellite")
+            metadata_file = os.path.join(location_path, "metadata.json")
+
+            # Проверяем наличие satellite директории
+            if not os.path.exists(satellite_dir):
+                logger.warning(f"No satellite directory in {location_path}, skipping")
+                skipped += 1
+                continue
+
+            # Загружаем метаданные если есть
+            metadata = {}
+            if os.path.exists(metadata_file):
+                try:
+                    with open(metadata_file, 'r', encoding='utf-8') as f:
+                        metadata = json.load(f)
+                except Exception as e:
+                    logger.warning(f"Failed to load metadata from {metadata_file}: {e}")
+                    metadata = {}
+
+            # Проходим по всем спутниковым снимкам в локации
+            for img_name in sorted(os.listdir(satellite_dir)):
+                if max_images and uploaded >= max_images:
+                    break
+
+                if not img_name.lower().endswith((".jpg", ".jpeg", ".png")):
+                    continue
+
+                img_path = os.path.join(satellite_dir, img_name)
+
+                try:
+                    img = Image.open(img_path).convert("RGB")
+
+                    # Формируем метаданные для загрузки
+                    upload_metadata = {
+                        "filename": img_name,
+                        "location": location_name,
+                        "dataset_format": "uav_satellite_pair"
+                    }
+
+                    # Добавляем информацию из metadata.json если есть
+                    if metadata:
+                        # Добавляем координаты из satellite секции
+                        if "satellite" in metadata:
+                            sat_meta = metadata["satellite"]
+                            if all(k in sat_meta for k in ["tl_E", "tl_N", "br_E", "br_N"]):
+                                upload_metadata["coordinates"] = {
+                                    "tl_E": sat_meta["tl_E"],
+                                    "tl_N": sat_meta["tl_N"],
+                                    "br_E": sat_meta["br_E"],
+                                    "br_N": sat_meta["br_N"]
+                                }
+
+                        # Добавляем GPS координаты UAV
+                        if "uav_gps" in metadata:
+                            upload_metadata["uav_gps"] = metadata["uav_gps"]
+
+                        # Добавляем высоту UAV
+                        if "uav_height_m" in metadata:
+                            upload_metadata["uav_height_m"] = metadata["uav_height_m"]
+
+                        # Добавляем ID объекта
+                        if "object_id" in metadata:
+                            upload_metadata["object_id"] = metadata["object_id"]
+
+                    # Загружаем изображение
+                    self.upload_image(img, upload_metadata)
+                    uploaded += 1
+
+                    if max_images and uploaded >= max_images:
+                        break
+
+                except Exception as e:
+                    logger.error(f"Failed to process {img_path}: {e}")
+                    errors += 1
+
+            if max_images and uploaded >= max_images:
+                break
+
+        logger.info(f"Dataset import completed: {uploaded} uploaded, {skipped} skipped, {errors} errors")
         return uploaded
