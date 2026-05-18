@@ -1,4 +1,5 @@
 import logging
+import os
 from typing import Optional, Dict, Any, List
 
 from fastapi import APIRouter, HTTPException, UploadFile, File, Form, Query
@@ -30,6 +31,46 @@ router = APIRouter()
 inference_service = InferenceService()
 gallery_repository = GalleryRepositoryImpl()
 gallery_service = GalleryService(inference_service, gallery_repository)
+
+
+@router.post("/import-dataset", response_model=GalleryUploadResponse)
+async def import_dataset(
+    dataset_path: str = Query(..., description="Путь к датасету на сервере"),
+    max_images: Optional[int] = Query(None, description="Максимальное количество изображений для импорта")
+):
+    """
+    Импорт датасета с метаданными в галерею.
+
+    Ожидается следующая структура датасета:
+    data/
+      └── location_name/
+          ├── satellite.jpg (или satellite.png)
+          ├── uav.jpg (или uav.png)
+          └── metadata.json
+
+    metadata.json должен содержать:
+    - satellite.tl_E, satellite.tl_N, satellite.br_E, satellite.br_N (координаты)
+    - uav_gps (GPS координаты дрона)
+    - uav_height_m (высота полета дрона)
+    - object_id (идентификатор объекта)
+    """
+    try:
+        if not os.path.exists(dataset_path):
+            raise HTTPException(status_code=400, detail=f"Dataset path does not exist: {dataset_path}")
+
+        uploaded_count = gallery_service.import_dataset_with_metadata(dataset_path, max_images)
+
+        return GalleryUploadResponse(
+            image_id=f"batch_import_{uploaded_count}",
+            status=f"success",
+            metadata={"uploaded": uploaded_count, "dataset_path": dataset_path}
+        )
+    except FileNotFoundError as e:
+        logger.error(f"Dataset import failed: {e}")
+        raise HTTPException(status_code=400, detail=str(e))
+    except Exception as e:
+        logger.error(f"Dataset import failed: {e}")
+        raise HTTPException(status_code=500, detail=f"Failed to import dataset: {str(e)}")
 
 
 @router.post("/upload", response_model=GalleryUploadResponse)
@@ -68,45 +109,6 @@ async def upload_image(request: GalleryUploadRequest):
         logger.error(f"Failed to upload image: {e}")
         raise HTTPException(status_code=500, detail=f"Failed to upload image: {str(e)}")
 
-@router.post("/import-dataset", response_model=GalleryUploadResponse)
-async def import_dataset(
-    dataset_path: str = Query(..., description="Путь к датасету на сервере"),
-    max_images: Optional[int] = Query(None, description="Максимальное количество изображений для импорта")
-):
-    """
-    Импорт датасета с метаданными в галерею.
-
-    Ожидается следующая структура датасета:
-    data/
-      └── location_name/
-          ├── satellite/
-          │   └── *.jpg, *.png
-          ├── uav/
-          └── metadata.json
-
-    metadata.json должен содержать:
-    - satellite.tl_E, satellite.tl_N, satellite.br_E, satellite.br_N (координаты)
-    - uav_gps (GPS координаты дрона)
-    - uav_height_m (высота полета дрона)
-    - object_id (идентификатор объекта)
-    """
-    try:
-        if not os.path.exists(dataset_path):
-            raise HTTPException(status_code=400, detail=f"Dataset path does not exist: {dataset_path}")
-
-        uploaded_count = gallery_service.import_dataset_with_metadata(dataset_path, max_images)
-
-        return GalleryUploadResponse(
-            image_id=f"batch_import_{uploaded_count}",
-            status=f"success",
-            metadata={"uploaded": uploaded_count, "dataset_path": dataset_path}
-        )
-    except FileNotFoundError as e:
-        logger.error(f"Dataset import failed: {e}")
-        raise HTTPException(status_code=400, detail=str(e))
-    except Exception as e:
-        logger.error(f"Dataset import failed: {e}")
-        raise HTTPException(status_code=500, detail=f"Failed to import dataset: {str(e)}")
 
 @router.post("/upload-file", response_model=GalleryUploadResponse)
 async def upload_image_file(

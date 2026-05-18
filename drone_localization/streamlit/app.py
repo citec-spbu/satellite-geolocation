@@ -328,6 +328,70 @@ elif page == "⚙️ Управление":
 
     st.divider()
 
+    # ==================== ИМПОРТ ДАТАСЕТА ====================
+    st.subheader("📁 Импорт датасета с метаданными")
+    st.markdown("""
+    **Формат датасета:**
+    ```
+    data/
+      └── location_name/
+          ├── satellite/
+          │   └── *.jpg, *.png
+          ├── uav/
+          └── metadata.json
+    ```
+
+    **metadata.json должен содержать:**
+    - `satellite.tl_E, satellite.tl_N, satellite.br_E, satellite.br_N` (координаты прямоугольника)
+    - `uav_gps` (GPS координаты дрона)
+    - `uav_height_m` (высота полета дрона)
+    - `object_id` (идентификатор объекта)
+    """)
+
+    col1, col2 = st.columns([3, 1])
+    with col1:
+        dataset_path = st.text_input(
+            "Путь к датасету на сервере",
+            placeholder="/path/to/dataset",
+            help="Укажите абсолютный путь к корневой папке датасета"
+        )
+    with col2:
+        max_images = st.number_input(
+            "Макс. изображений",
+            min_value=1,
+            value=None,
+            help="Оставьте пустым для импорта всех изображений"
+        )
+
+    if st.button("📥 Импортировать датасет", type="primary", key="import_dataset_btn"):
+        if dataset_path:
+            with st.spinner("Импорт датасета... Это может занять несколько минут."):
+                try:
+                    # Формируем URL с query параметрами
+                    import_url = f"{API_URL}/api/gallery/import-dataset?dataset_path={dataset_path}"
+                    if max_images:
+                        import_url += f"&max_images={max_images}"
+
+                    response = requests.post(import_url)
+
+                    if response.status_code == 200:
+                        result = response.json()
+                        uploaded_count = result.get("metadata", {}).get("uploaded", 0)
+                        st.success(f"✅ Датасет успешно импортирован!")
+                        st.info(f"**Загружено изображений:** {uploaded_count}")
+                        st.code(f"Image ID: {result['image_id']}")
+
+                        # Обновляем счетчик
+                        st.rerun()
+                    else:
+                        st.error(f"❌ Ошибка импорта: {response.json().get('detail', 'Неизвестная ошибка')}")
+                except Exception as e:
+                    st.error(f"❌ Произошла ошибка: {str(e)}")
+        else:
+            st.warning("⚠️ Пожалуйста, укажите путь к датасету")
+
+    st.divider()
+
     # Удаление по ID
     st.subheader("🗑️ Удалить изображение по ID")
     col1, col2 = st.columns([3, 1])

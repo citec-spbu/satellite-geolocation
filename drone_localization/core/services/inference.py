@@ -20,7 +20,7 @@ class InferenceService:
         weights_dir="weights",
         device="cuda",
         image_size=(256, 256),
-        model_weights="net_152.pth"
+        model_weights="retrieval.pth"
     ):
         self.device = (
             device if torch.cuda.is_available() and device == "cuda" else "cpu"
