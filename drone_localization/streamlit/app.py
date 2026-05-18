@@ -147,7 +147,7 @@ if page == "📤 Загрузить изображение":
                             "br_E": coordinates["br_E"],
                             "br_N": coordinates["br_N"]
                         }
-                    if meta
+                    if metadata:
                         payload["metadata"] = metadata
 
                     response = requests.post(

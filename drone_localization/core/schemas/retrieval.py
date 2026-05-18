@@ -1,5 +1,6 @@
 from PIL.Image import Image as PILImage
 from typing import Optional, Dict, Any
+from pydantic import BaseModel, Field
 
 class RetrievalResult(BaseModel):
     image: PILImage

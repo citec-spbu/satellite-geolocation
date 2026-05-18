@@ -8,7 +8,8 @@ from drone_localization.infrastructure.gallery_repository_impl import GalleryRep
 from PIL import Image
 
 from ..schemas.retrieval import RetrievalResult
-from drone_localization.infrastructure.gallery_repository_impl import GalleryRepositoryImpl
+from drone_localization.core.services.inference import InferenceService
+from drone_localization.core.services.gallery import GalleryService
 logger = logging.getLogger(__name__)
 
 
@@ -24,7 +25,7 @@ class RetrievalService:
         dataset_path: str = "/content/SUES-200-512x512",
         device: str = "cuda" if __import__("torch").cuda.is_available() else "cpu",
         image_size: Tuple[int, int] = (256, 256),
-        model_weights: str = "net_152.pth"
+        model_weights: str = "retrieval.pth"
     ):
         self.dataset_path = dataset_path
         # Инициализируем инфраструктурные компоненты

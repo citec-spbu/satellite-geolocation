@@ -1,4 +1,5 @@
 import logging
+import os
 from typing import Optional, Dict, Any, List
 
 from fastapi import APIRouter, HTTPException, UploadFile, File, Form, Query
@@ -43,9 +44,8 @@ async def import_dataset(
     Ожидается следующая структура датасета:
     data/
       └── location_name/
-          ├── satellite/
-          │   └── *.jpg, *.png
-          ├── uav/
+          ├── satellite.jpg (или satellite.png)
+          ├── uav.jpg (или uav.png)
           └── metadata.json
 
     metadata.json должен содержать:
