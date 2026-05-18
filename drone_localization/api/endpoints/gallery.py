@@ -32,42 +32,6 @@ gallery_repository = GalleryRepositoryImpl()
 gallery_service = GalleryService(inference_service, gallery_repository)
 
 
-@router.post("/upload", response_model=GalleryUploadResponse)
-async def upload_image(request: GalleryUploadRequest):
-    """
-    Загрузить спутниковое изображение в галерею.
-
-    Изображение будет обработано моделью для получения эмбеддинга,
-    затем сохранено в MinIO, а эмбеддинг - в Qdrant для поиска.
-
-    Args:
-        request: GalleryUploadRequest с изображением, координатами и метаданными
-    """
-    try:
-        # Конвертируем base64 в PIL Image
-        pil_image = base64_to_pil(request.image)
-
-        # Собираем метаданные с координатами
-        full_metadata = request.metadata or {}
-        if request.coordinates:
-            full_metadata["coordinates"] = {
-                "tl_E": request.coordinates.tl_E,
-                "tl_N": request.coordinates.tl_N,
-                "br_E": request.coordinates.br_E,
-                "br_N": request.coordinates.br_N
-            }
-
-        # Загружаем через сервис
-        image_id = gallery_service.upload_image(pil_image, full_metadata)
-
-        return GalleryUploadResponse(
-            image_id=image_id,
-            status="success"
-        )
-    except Exception as e:
-        logger.error(f"Failed to upload image: {e}")
-        raise HTTPException(status_code=500, detail=f"Failed to upload image: {str(e)}")
-
 @router.post("/import-dataset", response_model=GalleryUploadResponse)
 async def import_dataset(
     dataset_path: str = Query(..., description="Путь к датасету на сервере"),
@@ -107,6 +71,44 @@ async def import_dataset(
     except Exception as e:
         logger.error(f"Dataset import failed: {e}")
         raise HTTPException(status_code=500, detail=f"Failed to import dataset: {str(e)}")
+
+
+@router.post("/upload", response_model=GalleryUploadResponse)
+async def upload_image(request: GalleryUploadRequest):
+    """
+    Загрузить спутниковое изображение в галерею.
+
+    Изображение будет обработано моделью для получения эмбеддинга,
+    затем сохранено в MinIO, а эмбеддинг - в Qdrant для поиска.
+
+    Args:
+        request: GalleryUploadRequest с изображением, координатами и метаданными
+    """
+    try:
+        # Конвертируем base64 в PIL Image
+        pil_image = base64_to_pil(request.image)
+
+        # Собираем метаданные с координатами
+        full_metadata = request.metadata or {}
+        if request.coordinates:
+            full_metadata["coordinates"] = {
+                "tl_E": request.coordinates.tl_E,
+                "tl_N": request.coordinates.tl_N,
+                "br_E": request.coordinates.br_E,
+                "br_N": request.coordinates.br_N
+            }
+
+        # Загружаем через сервис
+        image_id = gallery_service.upload_image(pil_image, full_metadata)
+
+        return GalleryUploadResponse(
+            image_id=image_id,
+            status="success"
+        )
+    except Exception as e:
+        logger.error(f"Failed to upload image: {e}")
+        raise HTTPException(status_code=500, detail=f"Failed to upload image: {str(e)}")
+
 
 @router.post("/upload-file", response_model=GalleryUploadResponse)
 async def upload_image_file(

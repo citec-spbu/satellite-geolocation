@@ -1,8 +1,8 @@
 import io
+import json
 import logging
 import os
 from typing import List, Tuple
-import json
 
 import numpy as np
 from PIL import Image
@@ -18,7 +18,7 @@ class GalleryService:
         self.inference = inference
         self.repo = repository
 
-    def upload_image(self, image: Image.Image, metadata: dict = None) -> str:
+    def upload_image(self, image: Image.Image, meta dict = None) -> str:
         """Загружает одиночное спутниковое изображение в галерею."""
         emb = self.inference.extract_satellite_embedding(image)
         buf = io.BytesIO()
@@ -63,7 +63,7 @@ class GalleryService:
                     logger.warning(f"Failed to process {img_path}: {e}")
         logger.info(f"Built gallery from dataset: {uploaded} images")
         return uploaded
-    
+
     def import_dataset_with_metadata(self, dataset_path: str, max_images: int = None) -> int:
         """
         Импортирует датасет в формате:
@@ -130,9 +130,9 @@ class GalleryService:
                     }
 
                     # Добавляем информацию из metadata.json если есть
-                    if metadata:
+                    if meta
                         # Добавляем координаты из satellite секции
-                        if "satellite" in metadata:
+                        if "satellite" in meta
                             sat_meta = metadata["satellite"]
                             if all(k in sat_meta for k in ["tl_E", "tl_N", "br_E", "br_N"]):
                                 upload_metadata["coordinates"] = {
@@ -143,15 +143,15 @@ class GalleryService:
                                 }
 
                         # Добавляем GPS координаты UAV
-                        if "uav_gps" in metadata:
+                        if "uav_gps" in meta
                             upload_metadata["uav_gps"] = metadata["uav_gps"]
 
                         # Добавляем высоту UAV
-                        if "uav_height_m" in metadata:
+                        if "uav_height_m" in meta
                             upload_metadata["uav_height_m"] = metadata["uav_height_m"]
 
                         # Добавляем ID объекта
-                        if "object_id" in metadata:
+                        if "object_id" in meta
                             upload_metadata["object_id"] = metadata["object_id"]
 
                     # Загружаем изображение
