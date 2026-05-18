@@ -2,6 +2,7 @@ import io
 import logging
 import os
 from typing import List, Tuple
+import json
 
 import numpy as np
 from PIL import Image
