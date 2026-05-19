@@ -87,7 +87,7 @@ async def run_full_pipeline(request: LocalizationRequest):
             img_width=sat_width,
             img_height=sat_height
         )
-        satellite_result.image=draw_cross(satellite_result,pixel_x,pixel_y)
+        satellite_result.image=draw_cross(satellite_result.image,pixel_x,pixel_y)
         satellite_b64 = pil_to_base64(satellite_result.image)
         # 3. Сборка ответа СТРОГО по схеме jsons-talking.txt
         # coordinates - это широта и долгота (lat, lon) в виде прямоугольника
