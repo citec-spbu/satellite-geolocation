@@ -1,7 +1,7 @@
 import logging
 
 from fastapi import APIRouter, HTTPException
-
+from PIL import ImageDraw, Image
 from drone_localization.api.schemas.localization import (
     LocalizationRequest,
     LocalizationResponse,
@@ -18,6 +18,32 @@ router = APIRouter()
 retrieval_service = RetrievalService()
 refinement_service = RefinementService()
 
+
+from PIL import Image, ImageDraw
+
+def draw_cross(image, x, y, size=10, color=(255, 0, 0), width=2):
+    """
+    Рисует крестик на PIL.Image по координатам (x, y),
+    безопасно обрезая линии по границам изображения.
+    """
+
+    draw = ImageDraw.Draw(image)
+
+    img_w, img_h = image.size
+    left   = max(0, x - size)
+    right  = min(img_w - 1, x + size)
+
+    top    = max(0, y - size)
+    bottom = min(img_h - 1, y + size)
+
+    # Рисуем только если центр вообще попадает в изображение
+    if 0 <= y < img_h:
+        draw.line((left, y, right, y), fill=color, width=width)
+
+    if 0 <= x < img_w:
+        draw.line((x, top, x, bottom), fill=color, width=width)
+
+    return image
 
 @router.post("/localize", response_model=LocalizationResponse)
 async def run_full_pipeline(request: LocalizationRequest):
@@ -61,7 +87,7 @@ async def run_full_pipeline(request: LocalizationRequest):
             img_width=sat_width,
             img_height=sat_height
         )
-
+        satellite_result.image=draw_cross(satellite_result,pixel_x,pixel_y)
         satellite_b64 = pil_to_base64(satellite_result.image)
         # 3. Сборка ответа СТРОГО по схеме jsons-talking.txt
         # coordinates - это широта и долгота (lat, lon) в виде прямоугольника
