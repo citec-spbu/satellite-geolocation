@@ -9,7 +9,7 @@ class Settings(BaseSettings):
     image_size_w: int = 256
 
     # Qdrant
-    qdrant_host: str = "localhost"
+    qdrant_host: str = "qdrant"
     qdrant_port: int = 6333
     qdrant_collection: str = "satellite_gallery"
 
