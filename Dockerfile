@@ -1,4 +1,3 @@
-
 FROM ubuntu:22.04
 
 # Set non-interactive environment
@@ -23,6 +22,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     libxext6 \
     libxrender-dev \
     libgl1-mesa-glx \
+    python3.11 \
     && rm -rf /var/lib/apt/lists/*
 	
 # Install Pixi
