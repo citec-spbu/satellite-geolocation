@@ -21,7 +21,7 @@ refinement_service = RefinementService()
 
 from PIL import Image, ImageDraw
 
-def draw_cross(image, x, y, size=10, color=(255, 0, 0), width=2):
+def draw_cross(image, x, y, size=10, color=(255, 0, 0), width=5):
     """
     Рисует крестик на PIL.Image по координатам (x, y),
     безопасно обрезая линии по границам изображения.

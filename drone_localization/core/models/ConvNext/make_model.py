@@ -197,7 +197,7 @@ class build_convnext(nn.Module):
         else:
             print("Using model_type: convnext_tiny as a backbone")
             self.in_planes = 768
-            self.convnext = convnext_tiny(pretrained=True)
+            self.convnext = convnext_tiny(pretrained=False)
 
         self.num_classes = num_classes
         self.classifier1 = ClassBlock(
