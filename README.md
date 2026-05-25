@@ -53,3 +53,31 @@
 |Управление зависимостями|Pixi|
 
 ## Установка и запуск (TODO)
+
+1. **Клонируйте репозиторий:**
+   ```bash
+   git clone https://github.com/citec-spbu/satellite-geolocation
+   cd satellite-geolocation
+   ```
+2. **Подготовьте веса моделей:**
+
+   Поместите файлы весов для моделей в директорию `weights/`:
+   - `retrieval.pth` — веса для модели поиска
+   - `net_best.pth` — веса для модели уточнения
+3. **Запустите сервисы:**
+   ```bash
+   docker-compose up --build
+   ```
+
+4. **Доступ к сервисам:**
+   - **Streamlit UI**: http://localhost:8501
+   - **FastAPI Backend**: http://localhost:8000
+   - **Qdrant Dashboard**: http://localhost:6333
+   - **MinIO Console**: http://localhost:9001 (логин/пароль: `minioadmin/minioadmin`)
+
+5. **Остановка сервисов:**
+   ```bash
+   docker-compose down
+   ```
+
+---
